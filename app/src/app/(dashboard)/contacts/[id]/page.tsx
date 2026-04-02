@@ -27,6 +27,7 @@ import {
   Activity,
   Paperclip,
   FolderOpen,
+  Link2,
 } from "lucide-react";
 import { getContact } from "@/lib/actions/contacts";
 import { getNotesForContact } from "@/lib/actions/notes";
@@ -79,6 +80,8 @@ import { GenderPronounForm } from "@/components/features/gender-pronoun-form";
 import { ReligionForm } from "@/components/features/religion-form";
 import { MoodTrackingForm } from "@/components/features/mood-tracking-form";
 import { ContactFeed } from "@/components/features/contact-feed";
+import { ExternalIdentityForm } from "@/components/features/external-identity-form";
+import { getExternalIdentitiesForContact } from "@/lib/actions/external-identities";
 
 interface ContactDetailPageProps {
   params: Promise<{ id: string }>;
@@ -126,6 +129,7 @@ export default async function ContactDetailPage({
   const pronouns = await ensureDefaultPronouns();
   const religions = await ensureDefaultReligions();
   const emotions = await ensureDefaultEmotions();
+  const externalIdentities = await getExternalIdentitiesForContact(id);
 
   // Build display name
   const displayName =
@@ -225,6 +229,27 @@ export default async function ContactDetailPage({
               contactId={contact.id}
               infoTypes={contactInfoTypes}
               existingInfo={contactInfoData}
+            />
+          </CardContent>
+        </Card>
+
+        {/* External Identities */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5" />
+              External Identities
+              {externalIdentities.length > 0 && (
+                <span className="text-sm font-normal text-gray-500">
+                  ({externalIdentities.length})
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExternalIdentityForm
+              contactId={contact.id}
+              existingIdentities={externalIdentities}
             />
           </CardContent>
         </Card>

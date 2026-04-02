@@ -8,17 +8,19 @@
 ## Current Priority: Golden Record Foundation (EPIC-0002)
 
 ### In Progress
-- [ ] Server actions for ExternalIdentity CRUD (add/remove/list identities for a contact)
-- [ ] UI for managing external identities on contact detail page
-- [ ] Provenance tracking in contact create/update flows
-
-### Next Up
 - [ ] Duplicate detection algorithm (match on email, phone, name similarity)
 - [ ] Merge queue UI and merge/unmerge server actions
+
+### Next Up
+- [ ] Canonical field selection rules
 - [ ] CLI wrapper for common operations (EPIC-0003)
 - [ ] Agent audit trail and permission scoping (EPIC-0003)
 
 ### Done
+- [x] ExternalIdentity CRUD server actions (`external-identities.ts`) — add, update, delete, list, findByExternalId
+- [x] ExternalIdentity UI component on contact detail page (`external-identity-form.tsx`)
+- [x] Provenance tracking — `provenance.ts` with recordProvenance, getProvenanceForContact, getProvenanceHistory
+- [x] Provenance integrated into contact create/update flows (tracks name, job, prefix/suffix fields)
 - [x] Added 3 Golden Record models: ExternalIdentity, ContactMergeLog, ContactFieldProvenance (78 tables total)
 - [x] Cleaned tech debt: deleted 10 legacy routes, fixed tasks label→name FormData key, removed dual lockfile
 - [x] Harden API v1 — Zod validation on all 20 POST/PUT endpoints, proper error separation (parse/validation/business/internal), INTERNAL_ERROR code added
@@ -63,11 +65,11 @@
 ### EPIC-0002: Golden Record Foundation
 - [x] Add ExternalIdentity, ContactMergeLog, ContactFieldProvenance models to schema
 - [x] Prisma db push — 78 tables
-- [ ] Server actions for ExternalIdentity CRUD
-- [ ] Provenance tracking in contact create/update flows
+- [x] Server actions for ExternalIdentity CRUD
+- [x] Provenance tracking in contact create/update flows
+- [x] UI for external identities on contact detail page
 - [ ] Duplicate detection and merge queue
 - [ ] Canonical field selection rules
-- [ ] UI for external identities on contact detail page
 
 ### EPIC-0003: Agent Access Layer
 - [x] Harden API v1 — Zod schemas, proper error handling, ability normalization

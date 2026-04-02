@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { recordProvenance } from "@/lib/actions/provenance";
 
 // Types
 export interface ContactFormData {
@@ -11,6 +12,7 @@ export interface ContactFormData {
   lastName?: string;
   middleName?: string;
   nickname?: string;
+  maidenName?: string;
   prefix?: string;
   suffix?: string;
   jobPosition?: string;
@@ -146,12 +148,13 @@ export async function getContact(id: string) {
 // Create new contact
 export async function createContact(formData: FormData): Promise<ActionResult> {
   try {
-    const { vault } = await getUserVault();
+    const { userId, vault } = await getUserVault();
 
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     const middleName = formData.get("middleName") as string;
     const nickname = formData.get("nickname") as string;
+    const maidenName = formData.get("maidenName") as string;
     const prefix = formData.get("prefix") as string;
     const suffix = formData.get("suffix") as string;
     const jobPosition = formData.get("jobPosition") as string;
@@ -173,6 +176,7 @@ export async function createContact(formData: FormData): Promise<ActionResult> {
         lastName: lastName || null,
         middleName: middleName || null,
         nickname: nickname || null,
+        maidenName: maidenName || null,
         prefix: prefix || null,
         suffix: suffix || null,
         jobPosition: jobPosition || null,
@@ -237,6 +241,29 @@ export async function createContact(formData: FormData): Promise<ActionResult> {
       });
     }
 
+    try {
+      const trackedFields = {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        middleName: middleName || null,
+        nickname: nickname || null,
+        maidenName: maidenName || null,
+        prefix: prefix || null,
+        suffix: suffix || null,
+        jobPosition: jobPosition || null,
+      };
+
+      const fieldsWithValues = Object.fromEntries(
+        Object.entries(trackedFields).filter(([, value]) => value !== null)
+      );
+
+      if (Object.keys(fieldsWithValues).length > 0) {
+        await recordProvenance(contact.id, fieldsWithValues, "manual", userId);
+      }
+    } catch (provenanceError) {
+      console.error("Error recording contact provenance during create:", provenanceError);
+    }
+
     revalidatePath("/contacts");
     
     return { success: true, data: contact };
@@ -255,7 +282,7 @@ export async function updateContact(
   formData: FormData
 ): Promise<ActionResult> {
   try {
-    const { vault } = await getUserVault();
+    const { userId, vault } = await getUserVault();
 
     // Verify contact belongs to user's vault
     const existingContact = await db.contact.findFirst({
@@ -270,23 +297,44 @@ export async function updateContact(
     const lastName = formData.get("lastName") as string;
     const middleName = formData.get("middleName") as string;
     const nickname = formData.get("nickname") as string;
+    const maidenName = formData.get("maidenName") as string;
     const prefix = formData.get("prefix") as string;
     const suffix = formData.get("suffix") as string;
     const jobPosition = formData.get("jobPosition") as string;
 
+    const updatedFields = {
+      firstName: firstName || null,
+      lastName: lastName || null,
+      middleName: middleName || null,
+      nickname: nickname || null,
+      maidenName: maidenName || null,
+      prefix: prefix || null,
+      suffix: suffix || null,
+      jobPosition: jobPosition || null,
+    };
+
+    const changedFields = Object.fromEntries(
+      Object.entries(updatedFields).filter(([field, value]) => {
+        const existingValue = existingContact[field as keyof typeof updatedFields] as string | null;
+        return existingValue !== value;
+      })
+    ) as Record<string, string | null>;
+
     const contact = await db.contact.update({
       where: { id },
       data: {
-        firstName: firstName || null,
-        lastName: lastName || null,
-        middleName: middleName || null,
-        nickname: nickname || null,
-        prefix: prefix || null,
-        suffix: suffix || null,
-        jobPosition: jobPosition || null,
+        ...updatedFields,
         lastUpdatedAt: new Date(),
       },
     });
+
+    if (Object.keys(changedFields).length > 0) {
+      try {
+        await recordProvenance(id, changedFields, "manual", userId);
+      } catch (provenanceError) {
+        console.error("Error recording contact provenance during update:", provenanceError);
+      }
+    }
 
     revalidatePath("/contacts");
     revalidatePath(`/contacts/${id}`);
