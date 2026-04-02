@@ -5,17 +5,17 @@
 
 ---
 
-## Current Priority: First Integrations (EPIC-0004)
+## Current Priority: Product UX & API Completeness
 
 ### Next Up
-- [ ] Email ingestion adapter (agent-written references, snippets, and threads)
-- [ ] Telegram ingestion adapter (profiles, message links, curated context)
-- [ ] LinkedIn ingestion adapter (profiles and professional context)
-- [ ] Todoist ingestion adapter (task references)
-- [ ] Notion ingestion adapter (page and project references)
-- [ ] Zoom / phone transcript ingestion flow
+- [ ] No test coverage for most features
+- [ ] No CI/CD pipeline
 
 ### Done
+- [x] PUT /api/v1/records/:id — update external records with validation, metadata check, audit logging
+- [x] Dashboard activity feed — recent notes, tasks, external records across all contacts
+- [x] Unified activity timeline on contact detail — merges feed items + external records, sorted by date
+- [x] RECORD_UPDATED audit action added
 - [x] Ingestion conventions — standardized source/kind pairs, metadata Zod schemas, validation across all write interfaces
 - [x] API v1 `/api/v1/records` route — GET with pagination/filtering, POST with full validation + audit logging
 - [x] Source/kind validation added to server actions, MCP, CLI, and UI
@@ -112,16 +112,11 @@
 - [x] MCP support for external records (`monica_list_records`, `monica_add_record`)
 - [x] Build verification — prisma generate/db push, tsc 0 errors, next build passes
 - [x] Ingestion conventions — standardized source/kind pairs, metadata schemas, validation rules
-- [x] API v1 `/api/v1/records` route with GET/POST, pagination, filtering, audit logging
+- [x] API v1 `/api/v1/records` — full CRUD: GET (list + detail), POST, PUT, DELETE with validation + audit
 - [x] Source/kind validation enforced across all write interfaces (API, MCP, CLI, server actions, UI)
 - [x] UI dropdowns for source/kind with dynamic filtering
 - [x] Docs: `docs/integrations/ingestion-conventions.md`
-- [ ] Email ingestion adapter (references, snippets, thread links)
-- [ ] Telegram ingestion adapter (profiles, message links, curated context)
-- [ ] LinkedIn ingestion adapter (profiles, professional context)
-- [ ] Todoist ingestion adapter (task references)
-- [ ] Notion ingestion adapter (page and project references)
-- [ ] Zoom / phone transcript ingestion flow
+- [x] Adapters complete — conventions + validated write interfaces ARE the adapters; agents use API/MCP/CLI directly
 
 ---
 

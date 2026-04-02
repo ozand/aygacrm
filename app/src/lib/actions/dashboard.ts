@@ -18,6 +18,124 @@ async function getUserVault() {
   return userVault ? { userId: session.user.id, vault: userVault.vault } : null;
 }
 
+// Types for recent activity
+export interface RecentActivityItem {
+  id: string;
+  type: "note" | "external_record" | "task" | "call";
+  title: string;
+  subtitle: string | null;
+  contactId: string;
+  contactName: string;
+  timestamp: Date;
+  source?: string;
+  kind?: string;
+}
+
+// Get recent activity across all contacts in the vault
+export async function getRecentActivity(limit: number = 10): Promise<RecentActivityItem[]> {
+  try {
+    const userVault = await getUserVault();
+    if (!userVault) return [];
+
+    const { vault } = userVault;
+
+    // Fetch recent items in parallel
+    const [recentRecords, recentNotes, recentTasks] = await Promise.all([
+      // Recent external records
+      db.externalRecord.findMany({
+        where: {
+          contact: {
+            vaultId: vault.id,
+            deletedAt: null,
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        include: {
+          contact: {
+            select: { id: true, firstName: true, lastName: true, nickname: true },
+          },
+        },
+      }),
+
+      // Recent notes
+      db.note.findMany({
+        where: {
+          vaultId: vault.id,
+          contact: { deletedAt: null },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        include: {
+          contact: {
+            select: { id: true, firstName: true, lastName: true, nickname: true },
+          },
+        },
+      }),
+
+      // Recent tasks
+      db.contactTask.findMany({
+        where: {
+          contact: {
+            vaultId: vault.id,
+            deletedAt: null,
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        include: {
+          contact: {
+            select: { id: true, firstName: true, lastName: true, nickname: true },
+          },
+        },
+      }),
+    ]);
+
+    function contactName(c: { firstName: string | null; lastName: string | null; nickname: string | null }): string {
+      return [c.firstName, c.lastName].filter(Boolean).join(" ") || c.nickname || "Unknown";
+    }
+
+    const items: RecentActivityItem[] = [
+      ...recentRecords.map((r) => ({
+        id: r.id,
+        type: "external_record" as const,
+        title: r.title || `${r.source}/${r.kind}`,
+        subtitle: r.content?.substring(0, 80) || null,
+        contactId: r.contact.id,
+        contactName: contactName(r.contact),
+        timestamp: r.happenedAt ?? r.createdAt,
+        source: r.source,
+        kind: r.kind,
+      })),
+      ...recentNotes.map((n) => ({
+        id: n.id.toString(),
+        type: "note" as const,
+        title: n.title || "Untitled note",
+        subtitle: n.body?.substring(0, 80) || null,
+        contactId: n.contactId || "",
+        contactName: n.contact ? contactName(n.contact) : "Unknown",
+        timestamp: n.createdAt,
+      })),
+      ...recentTasks.map((t) => ({
+        id: t.id,
+        type: "task" as const,
+        title: t.name,
+        subtitle: t.completed ? "Completed" : "In progress",
+        contactId: t.contactId,
+        contactName: contactName(t.contact),
+        timestamp: t.createdAt,
+      })),
+    ];
+
+    // Sort by timestamp desc, take limit
+    items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return items.slice(0, limit);
+  } catch (error) {
+    console.error("Error fetching recent activity:", error);
+    return [];
+  }
+}
+
 // Get dashboard statistics
 export async function getDashboardStats() {
   try {

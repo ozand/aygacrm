@@ -13,9 +13,26 @@ import {
   ChevronRight,
   Cake,
   Gift,
+  Globe,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
-import { getDashboardStats } from "@/lib/actions/dashboard";
+import { getDashboardStats, getRecentActivity } from "@/lib/actions/dashboard";
 import { getUpcomingDates } from "@/lib/actions/important-dates";
+
+function getActivityIcon(type: string, _source?: string) {
+  if (type === "external_record") return Globe;
+  if (type === "note") return FileText;
+  if (type === "task") return CheckCircle;
+  return Clock;
+}
+
+function getActivityColor(type: string) {
+  if (type === "external_record") return "text-indigo-500";
+  if (type === "note") return "text-purple-500";
+  if (type === "task") return "text-green-500";
+  return "text-gray-500";
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -24,8 +41,11 @@ export default async function DashboardPage() {
     session?.user?.name?.split(" ")[0] ||
     "there";
 
-  const stats = await getDashboardStats();
-  const upcomingDates = await getUpcomingDates(30);
+  const [stats, upcomingDates, recentActivity] = await Promise.all([
+    getDashboardStats(),
+    getUpcomingDates(30),
+    getRecentActivity(10),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -112,6 +132,52 @@ export default async function DashboardPage() {
 
       {/* Main content */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <div className="text-center py-6">
+                <Clock className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  No recent activity. Add notes, tasks, or external records to see them here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((item) => {
+                  const Icon = getActivityIcon(item.type, item.source);
+                  const color = getActivityColor(item.type);
+
+                  return (
+                    <Link
+                      key={`${item.type}-${item.id}`}
+                      href={`/contacts/${item.contactId}`}
+                      className="flex items-start gap-3 p-2 -mx-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <div className={`mt-0.5 ${color}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.contactName}
+                          {item.source && ` \u00b7 ${item.source}`}
+                        </p>
+                      </div>
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        {new Date(item.timestamp).toLocaleDateString()}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Recent Contacts */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { getContactFeed, type FeedAction } from "@/lib/actions/feed";
+import { getExternalRecordsForContact } from "@/lib/actions/external-records";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Card,
@@ -28,6 +29,9 @@ import {
   Activity,
   CheckCircle,
   Bell,
+  Globe,
+  MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 
 interface FeedItem {
@@ -38,6 +42,23 @@ interface FeedItem {
   createdAt: Date;
   authorId: string | null;
   relatedData: Record<string, unknown> | null;
+}
+
+interface UnifiedTimelineItem {
+  id: string;
+  type: "feed" | "external_record";
+  timestamp: Date;
+  feedItem?: FeedItem;
+  externalRecord?: {
+    id: string;
+    source: string;
+    kind: string;
+    title: string | null;
+    content: string | null;
+    url: string | null;
+    happenedAt: Date | null;
+    createdAt: Date;
+  };
 }
 
 interface ContactFeedProps {
@@ -76,12 +97,27 @@ const actionConfig: Record<string, { icon: React.ElementType; color: string; lab
   important_date_added: { icon: Calendar, color: "text-violet-500", label: "Important date added" },
 };
 
+const sourceIcons: Record<string, React.ElementType> = {
+  email: MessageSquare,
+  telegram: MessageSquare,
+  linkedin: Globe,
+  todoist: CheckCircle,
+  notion: FileText,
+  zoom: Phone,
+  phone: Phone,
+  whatsapp: MessageSquare,
+};
+
 function getActionConfig(action: string) {
   return actionConfig[action] || { 
     icon: Clock, 
     color: "text-gray-500", 
     label: action.replace(/_/g, " ") 
   };
+}
+
+function getRecordIcon(source: string): React.ElementType {
+  return sourceIcons[source] || Globe;
 }
 
 function getRelatedDataSummary(item: FeedItem): string | null {
@@ -112,7 +148,7 @@ function getRelatedDataSummary(item: FeedItem): string | null {
 }
 
 export function ContactFeed({ contactId, limit = 10 }: ContactFeedProps) {
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [timelineItems, setTimelineItems] = useState<UnifiedTimelineItem[]>([]);
   const [isPending, startTransition] = useTransition();
   const [showAll, setShowAll] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
@@ -123,20 +159,45 @@ export function ContactFeed({ contactId, limit = 10 }: ContactFeedProps) {
 
   function loadFeed() {
     startTransition(async () => {
-      const items = await getContactFeed(contactId, {
-        limit: showAll ? 100 : limit,
-      });
-      setFeedItems(items);
-      setTotalCount(items.length);
+      const displayLimit = showAll ? 100 : limit;
+
+      // Fetch both feed items and external records in parallel
+      const [feedItems, externalRecords] = await Promise.all([
+        getContactFeed(contactId, { limit: displayLimit }),
+        getExternalRecordsForContact(contactId),
+      ]);
+
+      // Merge into unified timeline
+      const unified: UnifiedTimelineItem[] = [
+        ...feedItems.map((item) => ({
+          id: `feed-${item.id}`,
+          type: "feed" as const,
+          timestamp: new Date(item.createdAt),
+          feedItem: item,
+        })),
+        ...externalRecords.map((record) => ({
+          id: `record-${record.id}`,
+          type: "external_record" as const,
+          timestamp: record.happenedAt ? new Date(record.happenedAt) : new Date(record.createdAt),
+          externalRecord: record,
+        })),
+      ];
+
+      // Sort by timestamp desc
+      unified.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+      const sliced = unified.slice(0, displayLimit);
+      setTimelineItems(sliced);
+      setTotalCount(unified.length);
     });
   }
 
-  if (feedItems.length === 0 && !isPending) {
+  if (timelineItems.length === 0 && !isPending) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-medium">Activity Timeline</CardTitle>
-          <CardDescription>Recent activity for this contact</CardDescription>
+          <CardDescription>Recent activity and external records for this contact</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6 text-muted-foreground">
@@ -148,21 +209,21 @@ export function ContactFeed({ contactId, limit = 10 }: ContactFeedProps) {
     );
   }
 
-  // Group feed items by date
-  const groupedByDate = feedItems.reduce((groups, item) => {
-    const date = format(new Date(item.createdAt), "yyyy-MM-dd");
+  // Group timeline items by date
+  const groupedByDate = timelineItems.reduce((groups, item) => {
+    const date = format(item.timestamp, "yyyy-MM-dd");
     if (!groups[date]) {
       groups[date] = [];
     }
     groups[date].push(item);
     return groups;
-  }, {} as Record<string, FeedItem[]>);
+  }, {} as Record<string, UnifiedTimelineItem[]>);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-medium">Activity Timeline</CardTitle>
-        <CardDescription>Recent activity for this contact</CardDescription>
+        <CardDescription>Recent activity and external records for this contact</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="relative">
@@ -185,31 +246,77 @@ export function ContactFeed({ contactId, limit = 10 }: ContactFeedProps) {
                 {/* Items for this date */}
                 <div className="space-y-2 ml-12">
                   {items.map((item) => {
-                    const config = getActionConfig(item.action);
-                    const Icon = config.icon;
-                    const summary = getRelatedDataSummary(item);
+                    if (item.type === "external_record" && item.externalRecord) {
+                      const record = item.externalRecord;
+                      const RecordIcon = getRecordIcon(record.source);
 
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className={`mt-0.5 ${config.color}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{config.label}</p>
-                          {summary && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {summary}
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="mt-0.5 text-indigo-500">
+                            <RecordIcon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium truncate">
+                                {record.title || `${record.source}/${record.kind}`}
+                              </p>
+                              {record.url && (
+                                <a
+                                  href={record.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {record.source} {record.kind}
+                              {record.content && ` \u2014 ${record.content.substring(0, 50)}${record.content.length > 50 ? "..." : ""}`}
                             </p>
-                          )}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(item.timestamp, { addSuffix: true })}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                      );
+                    }
+
+                    // Regular feed item
+                    if (item.feedItem) {
+                      const config = getActionConfig(item.feedItem.action);
+                      const Icon = config.icon;
+                      const summary = getRelatedDataSummary(item.feedItem);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className={`mt-0.5 ${config.color}`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{config.label}</p>
+                            {summary && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {summary}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(item.timestamp, { addSuffix: true })}
+                          </div>
                         </div>
-                      </div>
-                    );
+                      );
+                    }
+
+                    return null;
                   })}
                 </div>
               </div>
@@ -218,7 +325,7 @@ export function ContactFeed({ contactId, limit = 10 }: ContactFeedProps) {
         </div>
 
         {/* Show more button */}
-        {!showAll && totalCount >= limit && (
+        {!showAll && totalCount > limit && (
           <div className="mt-4 text-center">
             <Button
               variant="ghost"
