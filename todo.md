@@ -8,8 +8,7 @@
 ## Current Priority: Golden Record Foundation (EPIC-0002)
 
 ### In Progress
-- [ ] Duplicate detection algorithm (match on email, phone, name similarity)
-- [ ] Merge queue UI and merge/unmerge server actions
+- [ ] Build verification (tsc/next build hanging in current session — needs fresh session)
 
 ### Next Up
 - [ ] Canonical field selection rules
@@ -17,6 +16,10 @@
 - [ ] Agent audit trail and permission scoping (EPIC-0003)
 
 ### Done
+- [x] Duplicate detection algorithm (`duplicates.ts`) — name similarity, email/phone match via ExternalIdentity + ContactInformation
+- [x] Merge/unmerge server actions (`merge.ts`) — atomic merge with relation transfer, soft-delete, merge log, simplified unmerge
+- [x] Merge queue UI (`merge-queue.tsx`) — candidate list with scores, merge confirmation dialog, dismiss flow
+- [x] Contacts page integration (`possible-duplicates-section.tsx`) — collapsible "Check for Duplicates" section
 - [x] ExternalIdentity CRUD server actions (`external-identities.ts`) — add, update, delete, list, findByExternalId
 - [x] ExternalIdentity UI component on contact detail page (`external-identity-form.tsx`)
 - [x] Provenance tracking — `provenance.ts` with recordProvenance, getProvenanceForContact, getProvenanceHistory
@@ -68,8 +71,11 @@
 - [x] Server actions for ExternalIdentity CRUD
 - [x] Provenance tracking in contact create/update flows
 - [x] UI for external identities on contact detail page
-- [ ] Duplicate detection and merge queue
+- [x] Duplicate detection algorithm (name/email/phone matching with scoring)
+- [x] Merge/unmerge server actions (atomic merge, relation transfer, merge log)
+- [x] Merge queue UI on contacts page (collapsible, with confirmation dialog)
 - [ ] Canonical field selection rules
+- [ ] Build verification needed (tsc hanging in session)
 
 ### EPIC-0003: Agent Access Layer
 - [x] Harden API v1 — Zod schemas, proper error handling, ability normalization
@@ -94,6 +100,7 @@
 - [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
 - [ ] Root `package.json` still has stale deps (sharp, vitest) — consider cleanup
+- [ ] tsc/next build hanging in current session — may be Node 24.14 + TS 5.9.3 + Prisma 78-model type evaluation issue
 
 ---
 

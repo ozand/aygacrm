@@ -10,6 +10,7 @@ import { ContactCard } from "@/components/features/contact-card";
 import { SearchContacts } from "@/components/features/search-contacts";
 import { ExportContacts } from "@/components/features/export-contacts";
 import { ImportContacts } from "@/components/features/import-contacts";
+import { PossibleDuplicatesSection } from "@/components/features/possible-duplicates-section";
 
 interface ContactsPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -102,6 +103,8 @@ export default async function ContactsPage({ searchParams }: ContactsPageProps) 
           <SearchContacts initialQuery={query} />
         </Suspense>
       </div>
+
+      <PossibleDuplicatesSection />
 
       {/* Contacts list */}
       <Suspense fallback={<ContactsListSkeleton />}>
