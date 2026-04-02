@@ -1,6 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { DollarSign, Users, MapPin, Smile, CalendarDays } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { MoodTrendsReport } from "@/components/features/reports/MoodTrendsReport";
+import { ImportantDatesReport } from "@/components/features/reports/ImportantDatesReport";
+import { ActivitySummaryReport } from "@/components/features/reports/ActivitySummaryReport";
+import { GiftsLoansReport } from "@/components/features/reports/GiftsLoansReport";
 
 export default function ReportsPage() {
   return (
@@ -30,50 +33,11 @@ export default function ReportsPage() {
 
         <MoodTrendsReport />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Important Dates Overview
-            </CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Coming Soon</div>
-            <p className="text-xs text-muted-foreground">
-              See upcoming and past important dates.
-            </p>
-          </CardContent>
-        </Card>
+        <ImportantDatesReport />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Activity Summary
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Coming Soon</div>
-            <p className="text-xs text-muted-foreground">
-              Overview of interactions with contacts.
-            </p>
-          </CardContent>
-        </Card>
+        <ActivitySummaryReport />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Gifts & Loans
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Coming Soon</div>
-            <p className="text-xs text-muted-foreground">
-              Track financial exchanges.
-            </p>
-          </CardContent>
-        </Card>
+        <GiftsLoansReport />
       </div>
     </div>
   );

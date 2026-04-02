@@ -5,11 +5,12 @@
 
 ---
 
-## Current Priority: Build Stabilization (EPIC-0001)
+## Current Priority: Agent Access Layer (EPIC-0003)
 
-### In Progress
-- [ ] Dev environment works end-to-end (needs running PostgreSQL)
-- [ ] Reports page — implement remaining "Coming Soon" reports
+### Next Up
+- [ ] Harden API v1 — consistent error responses, pagination, filtering
+- [ ] CLI wrapper for common operations
+- [ ] MCP server with safe contact/interaction tools
 
 ### Done
 - [x] Fix duplicate JournalEntry in Prisma schema
@@ -27,6 +28,10 @@
 - [x] Create root `.gitignore` and `.env.example`
 - [x] `next build` passes successfully (Turbopack, 0 errors)
 - [x] Initial git commit (baseline)
+- [x] Database setup — PostgreSQL `monica` DB, 75 tables via `prisma db push`
+- [x] Dev server verified — `pnpm dev --hostname 127.0.0.1 --port 4000` starts successfully
+- [x] Reports page — 3 new reports (Important Dates, Activity Summary, Gifts & Loans)
+- [x] Created `report-stats.ts` server actions for vault-wide report aggregation
 
 ---
 
@@ -34,9 +39,9 @@
 
 ### EPIC-0001: Core CRM Stabilization
 - [x] Build passes without DB connection
-- [ ] Dev environment works end-to-end
-- [ ] Reports page — implement remaining "Coming Soon" reports
-- [ ] MCP route — move from `app/api/mcp/` to `app/src/app/api/mcp/` or remove
+- [x] Dev environment works end-to-end
+- [x] Reports page — 3 reports implemented (Geographical Distribution deferred)
+- [ ] MCP route — move from `app/api/mcp/` to `app/src/app/api/mcp/` (deferred to EPIC-0003)
 
 ### EPIC-0002: Golden Record Foundation
 - [ ] Design identity resolution model (external IDs, source attribution)
@@ -69,8 +74,11 @@
 ---
 
 ## Notes
-- App lives at `app/src/...`, alias `@/*` → `./src/*`
+- App lives at `app/src/...`, alias `@/*` -> `./src/*`
 - Package manager: pnpm (in `app/`)
 - Stack: Next.js 16.1.6, React 19.2.3, Prisma 7.3.0, NextAuth 5 beta
 - 75 Prisma models, 2 enums
 - Detailed docs: `docs/product/`, `docs/architecture/`, `docs/backlog/`
+- Dev server: `pnpm dev --hostname 127.0.0.1 --port 4000` (port 3000 blocked by Windows EACCES)
+- Database: PostgreSQL 18.1 local, `monica` DB, 75 tables
+- `.env` in `app/` — `DATABASE_URL=postgresql://postgres@localhost:5432/monica`
