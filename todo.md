@@ -5,17 +5,17 @@
 
 ---
 
-## Current Priority: Agent Access Layer (EPIC-0003)
-
-### In Progress
-- [ ] CLI wrapper for common operations (EPIC-0003)
-- [ ] Canonical field selection rules (EPIC-0002)
+## Current Priority: First Integrations (EPIC-0004)
 
 ### Next Up
-- [ ] Email connector (EPIC-0004)
-- [ ] Telegram connector (EPIC-0004)
+- [ ] Email connector (import contacts + interaction history)
+- [ ] Telegram connector
+- [ ] LinkedIn connector
 
 ### Done
+- [x] CLI wrapper (`app/src/cli/monica-cli.ts`) — 7 commands: contacts list/get/search, notes add, tasks list/create, status
+- [x] Canonical field selection rules (`canonical-fields.ts`) — deterministic source priority, manual override wins, conflict detection
+- [x] Deleted stale root files: vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, storage.sqlite3, scripts/, utils/
 - [x] Agent audit trail — 36 audit calls wired across 22 API/MCP route files
 - [x] Audit module refactored — constants/helpers split from "use server" for Next.js compatibility
 - [x] Root package.json cleaned — stale deps removed, root node_modules deleted
@@ -80,13 +80,13 @@
 - [x] Merge/unmerge server actions (atomic merge, relation transfer, merge log)
 - [x] Merge queue UI on contacts page (collapsible, with confirmation dialog)
 - [x] Build verification — tsc 0 errors, next build passes
-- [ ] Canonical field selection rules
+- [x] Canonical field selection rules
 
 ### EPIC-0003: Agent Access Layer
 - [x] Harden API v1 — Zod schemas, proper error handling, ability normalization
 - [x] MCP server — 9 tools with proper auth, Zod validation, vault scoping
 - [x] Agent audit trail — 36 audit calls in API v1 + MCP write operations
-- [ ] CLI wrapper for common operations
+- [x] CLI wrapper for common operations
 
 ### EPIC-0004: First Integrations
 - [ ] Email connector (import contacts + interaction history)
@@ -105,7 +105,7 @@
 - [x] Root `package.json` cleaned — stale deps removed, node_modules deleted
 - [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
-- [ ] Root vitest.config.ts and tsconfig.json are stale — candidates for deletion
+- [x] Root vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, scripts/, utils/, storage.sqlite3 — all deleted
 
 ---
 
@@ -115,6 +115,7 @@
 - Stack: Next.js 16.1.6, React 19.2.3, Prisma 7.3.0, NextAuth 5 beta
 - 78 Prisma models (75 core + 3 golden record), 2 enums
 - Detailed docs: `docs/product/`, `docs/architecture/`, `docs/backlog/`
+- CLI: `pnpm exec tsx src/cli/monica-cli.ts <command>` from `app/` (direct DB, no auth)
 - Dev server: `pnpm dev --hostname 127.0.0.1 --port 4000` (port 3000 blocked by Windows EACCES)
 - Database: PostgreSQL 18.1 local, `monica` DB, 75 tables
 - `.env` in `app/` — `DATABASE_URL=postgresql://postgres@localhost:5432/monica`
