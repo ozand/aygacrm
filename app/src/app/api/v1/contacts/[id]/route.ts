@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateContactSchema = z.object({
   first_name: z.string().min(1).optional(),
@@ -272,6 +274,22 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.CONTACT_UPDATED,
+        objects: {
+          entityId: contact.id,
+          entityName: [contact.firstName, contact.lastName].filter(Boolean).join(" "),
+          entityType: "contact",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess({
         id: contact.id,
         object: "contact",
@@ -335,6 +353,22 @@ export const DELETE = withApiAuth(
     await db.contact.update({
       where: { id: contactId },
       data: { deletedAt: new Date() },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.CONTACT_DELETED,
+      objects: {
+        entityId: existing.id,
+        entityName: [existing.firstName, existing.lastName].filter(Boolean).join(" "),
+        entityType: "contact",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      contactId: existing.id,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: contactId });

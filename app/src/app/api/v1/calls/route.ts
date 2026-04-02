@@ -14,6 +14,7 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const createCallSchema = z.object({
   contact_id: z.string().min(1),
@@ -173,6 +174,22 @@ export const POST = withApiAuth(
             },
           },
         },
+      });
+
+      await createAuditLogFromApi({
+        action: "call_created",
+        objects: {
+          entityId: call.id,
+          entityName: `Call with ${[call.contact.firstName, call.contact.lastName].filter(Boolean).join(" ")}`,
+          entityType: "call",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: call.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
       });
 
       return apiSuccess(

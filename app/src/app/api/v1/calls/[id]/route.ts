@@ -10,6 +10,7 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateCallSchema = z.object({
   called_at: z.string().optional(),
@@ -191,6 +192,22 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: "call_updated",
+        objects: {
+          entityId: updatedCall.id,
+          entityName: `Call with ${[updatedCall.contact.firstName, updatedCall.contact.lastName].filter(Boolean).join(" ")}`,
+          entityType: "call",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: updatedCall.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess(transformCall(updatedCall));
     } catch (error) {
       console.error("Error:", error);
@@ -222,6 +239,22 @@ export const DELETE = withApiAuth(
     // Delete call
     await db.call.delete({
       where: { id: callId },
+    });
+
+    await createAuditLogFromApi({
+      action: "call_deleted",
+      objects: {
+        entityId: call.id,
+        entityName: `Call with ${[call.contact.firstName, call.contact.lastName].filter(Boolean).join(" ")}`,
+        entityType: "call",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      contactId: call.contact.id,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: callId });

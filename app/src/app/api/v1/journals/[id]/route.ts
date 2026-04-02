@@ -14,6 +14,8 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateJournalSchema = z.object({
   name: z.string().min(1).optional(),
@@ -136,6 +138,21 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.JOURNAL_ENTRY_UPDATED,
+        objects: {
+          entityId: updatedJournal.id,
+          entityName: updatedJournal.name,
+          entityType: "journal",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess({
         id: updatedJournal.id,
         object: "journal",
@@ -174,6 +191,21 @@ export const DELETE = withApiAuth(
 
     await db.journal.delete({
       where: { id: journalId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.JOURNAL_ENTRY_DELETED,
+      objects: {
+        entityId: journal.id,
+        entityName: journal.name,
+        entityType: "journal",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: journalId });

@@ -29,10 +29,8 @@ import {
 } from "lucide-react";
 import {
   getAuditLogs,
-  AUDIT_ACTIONS,
-  AuditAction,
-  AuditLogObjects,
 } from "@/lib/actions/audit";
+import { AUDIT_ACTIONS, type AuditAction, type AuditLogObjects } from "@/lib/api/audit-constants";
 import { formatDistanceToNow } from "date-fns";
 
 interface AuditLog {

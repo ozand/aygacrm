@@ -2,7 +2,8 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { createAuditLog, AUDIT_ACTIONS } from "./audit";
+import { createAuditLog } from "./audit";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
 
 // Get user's vault and account
 async function getUserVaultAndAccount() {

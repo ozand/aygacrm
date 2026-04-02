@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateGiftSchema = z.object({
   name: z.string().min(1).optional(),
@@ -219,6 +221,22 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.GIFT_UPDATED,
+        objects: {
+          entityId: updatedGift.id,
+          entityName: updatedGift.name,
+          entityType: "gift",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: updatedGift.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess(transformGift(updatedGift));
     } catch (error) {
       console.error("Error:", error);
@@ -250,6 +268,22 @@ export const DELETE = withApiAuth(
     // Delete gift
     await db.gift.delete({
       where: { id: giftId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.GIFT_DELETED,
+      objects: {
+        entityId: gift.id,
+        entityName: gift.name,
+        entityType: "gift",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      contactId: gift.contact.id,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: giftId });

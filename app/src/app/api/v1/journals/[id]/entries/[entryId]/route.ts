@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateEntrySchema = z.object({
   title: z.string().nullable().optional(),
@@ -226,6 +228,21 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.JOURNAL_ENTRY_UPDATED,
+        objects: {
+          entityId: updatedEntry.id,
+          entityName: updatedEntry.title || updatedEntry.content || `Journal ${journalId} entry`,
+          entityType: "journal_entry",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       // Handle sections update if provided
       if (sections !== undefined) {
         // Delete existing sections
@@ -317,6 +334,21 @@ export const DELETE = withApiAuth(
 
     await db.post.delete({
       where: { id: entryId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.JOURNAL_ENTRY_DELETED,
+      objects: {
+        entityId: entry.id,
+        entityName: entry.title || entry.content || `Journal ${journalId} entry`,
+        entityType: "journal_entry",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: entryId });

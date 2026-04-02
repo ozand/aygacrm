@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateReminderSchema = z.object({
   reminder_choice: z.enum(["day", "week", "month"]).optional(),
@@ -191,6 +193,22 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.REMINDER_UPDATED,
+        objects: {
+          entityId: updatedReminder.id,
+          entityName: updatedReminder.importantDate.label || "Reminder",
+          entityType: "reminder",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: updatedReminder.contact?.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess(transformReminder(updatedReminder));
     } catch (error) {
       console.error("Error:", error);
@@ -222,6 +240,22 @@ export const DELETE = withApiAuth(
     // Delete reminder
     await db.contactReminder.delete({
       where: { id: reminderId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.REMINDER_DELETED,
+      objects: {
+        entityId: reminder.id,
+        entityName: reminder.importantDate.label || "Reminder",
+        entityType: "reminder",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      contactId: reminder.contact?.id,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: reminderId });

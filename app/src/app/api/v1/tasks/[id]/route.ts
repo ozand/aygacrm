@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateTaskSchema = z.object({
   name: z.string().min(1).optional(),
@@ -185,6 +187,22 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.TASK_UPDATED,
+        objects: {
+          entityId: updatedTask.id,
+          entityName: updatedTask.name,
+          entityType: "task",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: updatedTask.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess(transformTask(updatedTask));
     } catch (error) {
       console.error("Error:", error);
@@ -216,6 +234,22 @@ export const DELETE = withApiAuth(
     // Delete task
     await db.contactTask.delete({
       where: { id: taskId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.TASK_DELETED,
+      objects: {
+        entityId: task.id,
+        entityName: task.name,
+        entityType: "task",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      contactId: task.contact.id,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: taskId });

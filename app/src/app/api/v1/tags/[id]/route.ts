@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateTagSchema = z.object({
   name: z.string().min(1),
@@ -141,6 +143,21 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.TAG_UPDATED,
+        objects: {
+          entityId: updatedTag.id,
+          entityName: updatedTag.name,
+          entityType: "tag",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess({
         id: updatedTag.id,
         object: "tag",
@@ -188,6 +205,21 @@ export const DELETE = withApiAuth(
     // Delete tag (will cascade delete ContactTag junction records)
     await db.tag.delete({
       where: { id: tagId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.TAG_DELETED,
+      objects: {
+        entityId: tag.id,
+        entityName: tag.name,
+        entityType: "tag",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: tagId });

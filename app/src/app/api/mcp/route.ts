@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { ApiAuthContext, hasAbility, validateApiToken } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 type JsonSchema = {
   type: "object";
@@ -60,6 +62,18 @@ function dateFromString(value: string): Date {
     throw new ToolError("Invalid datetime value", "VALIDATION_ERROR", 400);
   }
   return date;
+}
+
+function getRequestMetadata(request: NextRequest): {
+  ipAddress: string | null;
+  userAgent: string | null;
+} {
+  return {
+    ipAddress:
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip"),
+    userAgent: request.headers.get("user-agent"),
+  };
 }
 
 async function getAccessibleVaultIds(userId: string): Promise<string[]> {
@@ -188,7 +202,11 @@ interface ToolDefinition<TArgs> {
   ability: string;
   parameters: JsonSchema;
   schema: z.ZodType<TArgs>;
-  execute: (auth: ApiAuthContext, args: TArgs) => Promise<unknown>;
+  execute: (
+    auth: ApiAuthContext,
+    args: TArgs,
+    request: NextRequest
+  ) => Promise<unknown>;
 }
 
 function defineTool<TArgs>(tool: ToolDefinition<TArgs>): ToolDefinition<TArgs> {
@@ -313,7 +331,7 @@ const toolDefinitions = {
       additionalProperties: false,
     },
     schema: createContactSchema,
-    execute: async (auth, args) => {
+    execute: async (auth, args, request) => {
       const vaultIds = await getAccessibleVaultIds(auth.userId);
       if (vaultIds.length === 0) {
         throw new ToolError("No accessible vault found", "NOT_FOUND", 404);
@@ -331,6 +349,20 @@ const toolDefinitions = {
           lastName: args.lastName ?? null,
           nickname: args.nickname ?? null,
         },
+      });
+
+      const requestMetadata = getRequestMetadata(request);
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.CONTACT_CREATED,
+        objects: {
+          entityId: contact.id,
+          entityName: [contact.firstName, contact.lastName].filter(Boolean).join(" "),
+          entityType: "contact",
+        },
+        userId: auth.userId,
+        accountId: auth.accountId,
+        contactId: contact.id,
+        ...requestMetadata,
       });
 
       return contact;
@@ -352,7 +384,7 @@ const toolDefinitions = {
       additionalProperties: false,
     },
     schema: updateContactSchema,
-    execute: async (auth, args) => {
+    execute: async (auth, args, request) => {
       await getScopedContactOrThrow(args.contactId, auth);
 
       const updatedContact = await db.contact.update({
@@ -364,6 +396,22 @@ const toolDefinitions = {
           jobPosition: args.jobPosition,
           lastUpdatedAt: new Date(),
         },
+      });
+
+      const requestMetadata = getRequestMetadata(request);
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.CONTACT_UPDATED,
+        objects: {
+          entityId: updatedContact.id,
+          entityName: [updatedContact.firstName, updatedContact.lastName]
+            .filter(Boolean)
+            .join(" "),
+          entityType: "contact",
+        },
+        userId: auth.userId,
+        accountId: auth.accountId,
+        contactId: updatedContact.id,
+        ...requestMetadata,
       });
 
       return updatedContact;
@@ -383,7 +431,7 @@ const toolDefinitions = {
       additionalProperties: false,
     },
     schema: addNoteSchema,
-    execute: async (auth, args) => {
+    execute: async (auth, args, request) => {
       const contact = await getScopedContactOrThrow(args.contactId, auth);
 
       const note = await db.note.create({
@@ -394,6 +442,20 @@ const toolDefinitions = {
           body: args.body,
           authorId: auth.userId,
         },
+      });
+
+      const requestMetadata = getRequestMetadata(request);
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.NOTE_CREATED,
+        objects: {
+          entityId: note.id,
+          entityName: note.title || note.body,
+          entityType: "note",
+        },
+        userId: auth.userId,
+        accountId: auth.accountId,
+        contactId: note.contactId,
+        ...requestMetadata,
       });
 
       return note;
@@ -414,7 +476,7 @@ const toolDefinitions = {
       additionalProperties: false,
     },
     schema: logActivitySchema,
-    execute: async (auth, args) => {
+    execute: async (auth, args, request) => {
       const contact = await getScopedContactOrThrow(args.contactId, auth);
 
       const activity = await db.activity.create({
@@ -426,6 +488,20 @@ const toolDefinitions = {
           happenedAt: args.happenedAt ? dateFromString(args.happenedAt) : null,
           authorId: auth.userId,
         },
+      });
+
+      const requestMetadata = getRequestMetadata(request);
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.ACTIVITY_CREATED,
+        objects: {
+          entityId: activity.id,
+          entityName: activity.summary || "Activity",
+          entityType: "activity",
+        },
+        userId: auth.userId,
+        accountId: auth.accountId,
+        contactId: activity.contactId,
+        ...requestMetadata,
       });
 
       return activity;
@@ -497,7 +573,7 @@ const toolDefinitions = {
       additionalProperties: false,
     },
     schema: createTaskSchema,
-    execute: async (auth, args) => {
+    execute: async (auth, args, request) => {
       const contact = await getScopedContactOrThrow(args.contactId, auth);
 
       const task = await db.contactTask.create({
@@ -517,6 +593,20 @@ const toolDefinitions = {
             },
           },
         },
+      });
+
+      const requestMetadata = getRequestMetadata(request);
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.TASK_CREATED,
+        objects: {
+          entityId: task.id,
+          entityName: task.name,
+          entityType: "task",
+        },
+        userId: auth.userId,
+        accountId: auth.accountId,
+        contactId: task.contactId,
+        ...requestMetadata,
       });
 
       return {
@@ -546,7 +636,7 @@ const toolDefinitions = {
       additionalProperties: false,
     },
     schema: updateTaskSchema,
-    execute: async (auth, args) => {
+    execute: async (auth, args, request) => {
       const existingTask = await db.contactTask.findFirst({
         where: {
           id: args.taskId,
@@ -606,6 +696,20 @@ const toolDefinitions = {
         },
       });
 
+      const requestMetadata = getRequestMetadata(request);
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.TASK_UPDATED,
+        objects: {
+          entityId: task.id,
+          entityName: task.name,
+          entityType: "task",
+        },
+        userId: auth.userId,
+        accountId: auth.accountId,
+        contactId: task.contactId,
+        ...requestMetadata,
+      });
+
       return {
         id: task.id,
         name: task.name,
@@ -628,7 +732,8 @@ function isToolName(tool: string): tool is ToolName {
 async function executeToolByName(
   tool: ToolName,
   auth: ApiAuthContext,
-  rawArguments: Record<string, unknown>
+  rawArguments: Record<string, unknown>,
+  request: NextRequest
 ): Promise<unknown> {
   switch (tool) {
     case "monica_search_contacts": {
@@ -636,63 +741,63 @@ async function executeToolByName(
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_search_contacts.execute(auth, argsResult.data);
+      return toolDefinitions.monica_search_contacts.execute(auth, argsResult.data, request);
     }
     case "monica_get_contact": {
       const argsResult = toolDefinitions.monica_get_contact.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_get_contact.execute(auth, argsResult.data);
+      return toolDefinitions.monica_get_contact.execute(auth, argsResult.data, request);
     }
     case "monica_create_contact": {
       const argsResult = toolDefinitions.monica_create_contact.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_create_contact.execute(auth, argsResult.data);
+      return toolDefinitions.monica_create_contact.execute(auth, argsResult.data, request);
     }
     case "monica_update_contact": {
       const argsResult = toolDefinitions.monica_update_contact.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_update_contact.execute(auth, argsResult.data);
+      return toolDefinitions.monica_update_contact.execute(auth, argsResult.data, request);
     }
     case "monica_add_note": {
       const argsResult = toolDefinitions.monica_add_note.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_add_note.execute(auth, argsResult.data);
+      return toolDefinitions.monica_add_note.execute(auth, argsResult.data, request);
     }
     case "monica_log_activity": {
       const argsResult = toolDefinitions.monica_log_activity.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_log_activity.execute(auth, argsResult.data);
+      return toolDefinitions.monica_log_activity.execute(auth, argsResult.data, request);
     }
     case "monica_list_tasks": {
       const argsResult = toolDefinitions.monica_list_tasks.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_list_tasks.execute(auth, argsResult.data);
+      return toolDefinitions.monica_list_tasks.execute(auth, argsResult.data, request);
     }
     case "monica_create_task": {
       const argsResult = toolDefinitions.monica_create_task.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_create_task.execute(auth, argsResult.data);
+      return toolDefinitions.monica_create_task.execute(auth, argsResult.data, request);
     }
     case "monica_update_task": {
       const argsResult = toolDefinitions.monica_update_task.schema.safeParse(rawArguments);
       if (!argsResult.success) {
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
-      return toolDefinitions.monica_update_task.execute(auth, argsResult.data);
+      return toolDefinitions.monica_update_task.execute(auth, argsResult.data, request);
     }
   }
 }
@@ -745,7 +850,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const result = await executeToolByName(parsedBody.tool, authContext, parsedBody.arguments);
+    const result = await executeToolByName(
+      parsedBody.tool,
+      authContext,
+      parsedBody.arguments,
+      request
+    );
     return NextResponse.json({ result });
   } catch (error) {
     if (error instanceof ToolError) {

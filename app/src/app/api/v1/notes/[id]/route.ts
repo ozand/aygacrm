@@ -10,6 +10,8 @@ import {
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const updateNoteSchema = z.object({
   body: z.string().min(1).optional(),
@@ -208,6 +210,22 @@ export const PUT = withApiAuth(
         },
       });
 
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.NOTE_UPDATED,
+        objects: {
+          entityId: updatedNote.id,
+          entityName: updatedNote.title || updatedNote.body,
+          entityType: "note",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: updatedNote.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
+      });
+
       return apiSuccess(transformNote(updatedNote));
     } catch (error) {
       console.error("Error:", error);
@@ -239,6 +257,22 @@ export const DELETE = withApiAuth(
     // Delete note
     await db.note.delete({
       where: { id: noteId },
+    });
+
+    await createAuditLogFromApi({
+      action: AUDIT_ACTIONS.NOTE_DELETED,
+      objects: {
+        entityId: note.id,
+        entityName: note.title || note.body,
+        entityType: "note",
+      },
+      userId: context.userId,
+      accountId: context.accountId,
+      contactId: note.contact.id,
+      ipAddress:
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip"),
+      userAgent: request.headers.get("user-agent"),
     });
 
     return apiSuccess({ deleted: true, id: noteId });

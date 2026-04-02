@@ -14,6 +14,8 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const createEntrySchema = z.object({
   title: z.string().optional(),
@@ -192,6 +194,21 @@ export const POST = withApiAuth(
             },
           },
         },
+      });
+
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.JOURNAL_ENTRY_CREATED,
+        objects: {
+          entityId: post.id,
+          entityName: post.title || post.content || `Journal ${journalId} entry`,
+          entityType: "journal_entry",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
       });
 
       return apiSuccess(

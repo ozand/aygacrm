@@ -14,6 +14,8 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const createGiftSchema = z.object({
   contact_id: z.string().min(1),
@@ -200,6 +202,22 @@ export const POST = withApiAuth(
             },
           },
         },
+      });
+
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.GIFT_CREATED,
+        objects: {
+          entityId: gift.id,
+          entityName: gift.name,
+          entityType: "gift",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: gift.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
       });
 
       return apiSuccess(

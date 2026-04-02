@@ -8,14 +8,17 @@
 ## Current Priority: Agent Access Layer (EPIC-0003)
 
 ### In Progress
-- [ ] Agent audit trail — wire audit logging into API v1 and MCP write operations
-- [ ] Root package.json cleanup — remove stale deps (sharp, vitest, etc.)
-
-### Next Up
 - [ ] CLI wrapper for common operations (EPIC-0003)
 - [ ] Canonical field selection rules (EPIC-0002)
 
+### Next Up
+- [ ] Email connector (EPIC-0004)
+- [ ] Telegram connector (EPIC-0004)
+
 ### Done
+- [x] Agent audit trail — 36 audit calls wired across 22 API/MCP route files
+- [x] Audit module refactored — constants/helpers split from "use server" for Next.js compatibility
+- [x] Root package.json cleaned — stale deps removed, root node_modules deleted
 - [x] Build verification — tsc 0 errors, next build passes (fresh session fixed hanging)
 - [x] Fixed merge.ts TS error (Prisma.JsonNull for nullable JSON field)
 - [x] Duplicate detection algorithm (`duplicates.ts`) — name similarity, email/phone match via ExternalIdentity + ContactInformation
@@ -82,8 +85,8 @@
 ### EPIC-0003: Agent Access Layer
 - [x] Harden API v1 — Zod schemas, proper error handling, ability normalization
 - [x] MCP server — 9 tools with proper auth, Zod validation, vault scoping
+- [x] Agent audit trail — 36 audit calls in API v1 + MCP write operations
 - [ ] CLI wrapper for common operations
-- [ ] Agent audit trail and permission scoping
 
 ### EPIC-0004: First Integrations
 - [ ] Email connector (import contacts + interaction history)
@@ -99,9 +102,10 @@
 - [x] `formData.get("label")` in tasks.ts — fixed to `formData.get("name")` to match Prisma field
 - [x] Legacy routes deleted: `app/api/monica/` (10 files)
 - [x] Dual lockfiles resolved: root `package-lock.json` removed
+- [x] Root `package.json` cleaned — stale deps removed, node_modules deleted
 - [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
-- [ ] Root `package.json` still has stale deps (sharp, vitest) — cleanup in progress
+- [ ] Root vitest.config.ts and tsconfig.json are stale — candidates for deletion
 
 ---
 

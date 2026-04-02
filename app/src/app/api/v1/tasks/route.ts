@@ -14,6 +14,8 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const createTaskSchema = z
   .object({
@@ -159,6 +161,22 @@ export const POST = withApiAuth(
           description: description || null,
           dueAt: due_at ? new Date(due_at) : null,
         },
+      });
+
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.TASK_CREATED,
+        objects: {
+          entityId: task.id,
+          entityName: task.name,
+          entityType: "task",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
       });
 
       return apiSuccess(

@@ -14,6 +14,8 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
+import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 
 const createActivitySchema = z.object({
   contact_id: z.string().min(1),
@@ -170,6 +172,22 @@ export const POST = withApiAuth(
             },
           },
         },
+      });
+
+      await createAuditLogFromApi({
+        action: AUDIT_ACTIONS.ACTIVITY_CREATED,
+        objects: {
+          entityId: activity.id,
+          entityName: activity.summary || "Activity",
+          entityType: "activity",
+        },
+        userId: context.userId,
+        accountId: context.accountId,
+        contactId: activity.contact.id,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip"),
+        userAgent: request.headers.get("user-agent"),
       });
 
       return apiSuccess(
