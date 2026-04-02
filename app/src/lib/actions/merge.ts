@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 export interface ActionResult {
   success: boolean;
@@ -318,8 +319,8 @@ export async function mergeContacts(
               ? ({
                   fieldsFromSecondary: fieldsToCopy,
                   values: mergedFieldValues,
-                } as Record<string, unknown>)
-              : null,
+                } as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
           mergedBy: userId,
           reason: "manual",
         },

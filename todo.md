@@ -5,17 +5,19 @@
 
 ---
 
-## Current Priority: Golden Record Foundation (EPIC-0002)
+## Current Priority: Agent Access Layer (EPIC-0003)
 
 ### In Progress
-- [ ] Build verification (tsc/next build hanging in current session — needs fresh session)
+- [ ] Agent audit trail — wire audit logging into API v1 and MCP write operations
+- [ ] Root package.json cleanup — remove stale deps (sharp, vitest, etc.)
 
 ### Next Up
-- [ ] Canonical field selection rules
 - [ ] CLI wrapper for common operations (EPIC-0003)
-- [ ] Agent audit trail and permission scoping (EPIC-0003)
+- [ ] Canonical field selection rules (EPIC-0002)
 
 ### Done
+- [x] Build verification — tsc 0 errors, next build passes (fresh session fixed hanging)
+- [x] Fixed merge.ts TS error (Prisma.JsonNull for nullable JSON field)
 - [x] Duplicate detection algorithm (`duplicates.ts`) — name similarity, email/phone match via ExternalIdentity + ContactInformation
 - [x] Merge/unmerge server actions (`merge.ts`) — atomic merge with relation transfer, soft-delete, merge log, simplified unmerge
 - [x] Merge queue UI (`merge-queue.tsx`) — candidate list with scores, merge confirmation dialog, dismiss flow
@@ -74,8 +76,8 @@
 - [x] Duplicate detection algorithm (name/email/phone matching with scoring)
 - [x] Merge/unmerge server actions (atomic merge, relation transfer, merge log)
 - [x] Merge queue UI on contacts page (collapsible, with confirmation dialog)
+- [x] Build verification — tsc 0 errors, next build passes
 - [ ] Canonical field selection rules
-- [ ] Build verification needed (tsc hanging in session)
 
 ### EPIC-0003: Agent Access Layer
 - [x] Harden API v1 — Zod schemas, proper error handling, ability normalization
@@ -99,8 +101,7 @@
 - [x] Dual lockfiles resolved: root `package-lock.json` removed
 - [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
-- [ ] Root `package.json` still has stale deps (sharp, vitest) — consider cleanup
-- [ ] tsc/next build hanging in current session — may be Node 24.14 + TS 5.9.3 + Prisma 78-model type evaluation issue
+- [ ] Root `package.json` still has stale deps (sharp, vitest) — cleanup in progress
 
 ---
 
