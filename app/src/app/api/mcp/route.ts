@@ -6,6 +6,16 @@ import { db } from "@/lib/db";
 import { ApiAuthContext, hasAbility, validateApiToken } from "@/lib/api/auth";
 import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
 import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
+import {
+  sourceSchema,
+  kindSchema,
+  isValidSourceKind,
+  validateMetadata,
+  type Source,
+  type Kind,
+  SOURCES,
+  KINDS,
+} from "@/lib/ingestion-conventions";
 
 type JsonSchema = {
   type: "object";
@@ -185,12 +195,13 @@ const listRecordsSchema = z.object({
 const addRecordSchema = z
   .object({
     contactId: z.string().min(1),
-    source: z.string().min(1),
-    kind: z.string().min(1),
+    source: sourceSchema,
+    kind: kindSchema,
     externalId: z.string().min(1).optional(),
     url: z.string().url().optional(),
     title: z.string().min(1).optional(),
     content: z.string().min(1).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
     happenedAt: isoDatetimeSchema.optional(),
   })
   .refine(
@@ -201,6 +212,13 @@ const addRecordSchema = z
       value.content !== undefined,
     {
       message: "At least one of externalId, url, title, or content must be provided",
+    }
+  )
+  .refine(
+    (value) => isValidSourceKind(value.source, value.kind),
+    {
+      message: "Invalid source/kind combination",
+      path: ["kind"],
     }
   );
 
@@ -670,18 +688,24 @@ const toolDefinitions = {
     },
   }),
   monica_add_record: defineTool({
-    description: "Add an external record to a contact.",
+    description:
+      "Add an external record to a contact. Valid sources: " +
+      SOURCES.join(", ") +
+      ". Valid kinds: " +
+      KINDS.join(", ") +
+      ". Not all source/kind combinations are valid.",
     ability: "notes:write",
     parameters: {
       type: "object",
       properties: {
         contactId: { type: "string" },
-        source: { type: "string" },
-        kind: { type: "string" },
+        source: { type: "string", enum: [...SOURCES] },
+        kind: { type: "string", enum: [...KINDS] },
         externalId: { type: "string" },
         url: { type: "string", format: "uri" },
         title: { type: "string" },
         content: { type: "string" },
+        metadata: { type: "object" },
         happenedAt: { type: "string", format: "date-time" },
       },
       required: ["contactId", "source", "kind"],
@@ -690,6 +714,14 @@ const toolDefinitions = {
     schema: addRecordSchema,
     execute: async (auth, args) => {
       const contact = await getScopedContactOrThrow(args.contactId, auth);
+
+      // Validate metadata against source-specific schema
+      if (args.metadata) {
+        const metaResult = validateMetadata(args.source as Source, args.metadata);
+        if (!metaResult.success) {
+          throw new ToolError(metaResult.error, "VALIDATION_ERROR", 400);
+        }
+      }
 
       const record = await db.externalRecord.create({
         data: {
@@ -700,6 +732,9 @@ const toolDefinitions = {
           url: args.url ?? null,
           title: args.title ?? null,
           content: args.content ?? null,
+          metadata: args.metadata
+            ? (args.metadata as Record<string, string | number | boolean | null>)
+            : undefined,
           happenedAt: args.happenedAt ? dateFromString(args.happenedAt) : null,
         },
       });

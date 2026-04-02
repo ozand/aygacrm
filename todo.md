@@ -12,10 +12,15 @@
 - [ ] Telegram ingestion adapter (profiles, message links, curated context)
 - [ ] LinkedIn ingestion adapter (profiles and professional context)
 - [ ] Todoist ingestion adapter (task references)
-- [ ] Notion ingestion adapter (page/project references)
+- [ ] Notion ingestion adapter (page and project references)
 - [ ] Zoom / phone transcript ingestion flow
 
 ### Done
+- [x] Ingestion conventions — standardized source/kind pairs, metadata Zod schemas, validation across all write interfaces
+- [x] API v1 `/api/v1/records` route — GET with pagination/filtering, POST with full validation + audit logging
+- [x] Source/kind validation added to server actions, MCP, CLI, and UI
+- [x] UI upgraded — source/kind dropdowns with dynamic kind filtering based on source
+- [x] Docs: `docs/integrations/ingestion-conventions.md` — full reference for sources, kinds, metadata schemas, and example API calls
 - [x] EPIC-0004 pivoted from native connectors to agent-driven ingestion contracts and curated external context storage
 - [x] `ExternalRecord` model added — generic storage for external references, snippets, tasks, pages, messages, meetings, and transcripts
 - [x] External records server actions (`external-records.ts`) — add, update, delete, list with vault ownership checks
@@ -106,6 +111,11 @@
 - [x] CLI support for external records (`records list`, `records add`)
 - [x] MCP support for external records (`monica_list_records`, `monica_add_record`)
 - [x] Build verification — prisma generate/db push, tsc 0 errors, next build passes
+- [x] Ingestion conventions — standardized source/kind pairs, metadata schemas, validation rules
+- [x] API v1 `/api/v1/records` route with GET/POST, pagination, filtering, audit logging
+- [x] Source/kind validation enforced across all write interfaces (API, MCP, CLI, server actions, UI)
+- [x] UI dropdowns for source/kind with dynamic filtering
+- [x] Docs: `docs/integrations/ingestion-conventions.md`
 - [ ] Email ingestion adapter (references, snippets, thread links)
 - [ ] Telegram ingestion adapter (profiles, message links, curated context)
 - [ ] LinkedIn ingestion adapter (profiles, professional context)

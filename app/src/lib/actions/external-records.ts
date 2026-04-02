@@ -3,6 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  sourceSchema,
+  kindSchema,
+  isValidSourceKind,
+  type Source,
+  type Kind,
+} from "@/lib/ingestion-conventions";
 
 export interface ActionResult {
   success: boolean;
@@ -95,6 +102,19 @@ export async function addExternalRecord(formData: FormData): Promise<ActionResul
     }
     if (!kind) {
       return { success: false, error: "Kind is required" };
+    }
+
+    // Validate source and kind against ingestion conventions
+    const sourceParsed = sourceSchema.safeParse(source);
+    if (!sourceParsed.success) {
+      return { success: false, error: `Invalid source "${source}". Valid sources: email, telegram, linkedin, todoist, notion, zoom, phone, whatsapp, manual, other` };
+    }
+    const kindParsed = kindSchema.safeParse(kind);
+    if (!kindParsed.success) {
+      return { success: false, error: `Invalid kind "${kind}". Valid kinds: message, thread, profile, note, transcript, task, page, meeting, reference, snippet` };
+    }
+    if (!isValidSourceKind(sourceParsed.data, kindParsed.data)) {
+      return { success: false, error: `Invalid source/kind combination: "${source}/${kind}"` };
     }
 
     if (!url && !title && !content && !externalId) {

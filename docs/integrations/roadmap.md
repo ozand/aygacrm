@@ -27,6 +27,12 @@ The adapter or external agent is responsible for collecting data from the source
 
 These are ingestion contracts, not native OAuth/webhook/polling connectors. Monica should define the storage and write interfaces; external systems should handle source authentication, data collection, and source-specific extraction.
 
+## Ingestion conventions
+
+Standardized source/kind pairs, metadata schemas, and validation rules are defined in `ingestion-conventions.md` and enforced across all write interfaces (API v1, MCP, CLI, UI).
+
+Source of truth: `app/src/lib/ingestion-conventions.ts`
+
 ## Documentation rule
 
 Each integration gets its own implementation doc when work starts. Until then, this roadmap is the source of priority order and expected direction.

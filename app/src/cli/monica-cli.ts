@@ -4,6 +4,13 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import { PrismaClient } from "@prisma/client";
+import {
+  SOURCES,
+  KINDS,
+  isValidSourceKind,
+  type Source,
+  type Kind,
+} from "../lib/ingestion-conventions.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -595,6 +602,18 @@ async function runRecordsAdd(args: string[]): Promise<void> {
   if (!kind) {
     throw new Error("Missing --kind");
   }
+
+  // Validate against ingestion conventions
+  if (!SOURCES.includes(source as Source)) {
+    throw new Error(`Invalid --source "${source}". Valid: ${SOURCES.join(", ")}`);
+  }
+  if (!KINDS.includes(kind as Kind)) {
+    throw new Error(`Invalid --kind "${kind}". Valid: ${KINDS.join(", ")}`);
+  }
+  if (!isValidSourceKind(source as Source, kind as Kind)) {
+    throw new Error(`Invalid source/kind combination: "${source}/${kind}"`);
+  }
+
   if (!title && !url && !content && !externalId) {
     throw new Error("At least one of --title, --url, --content, or --external-id is required");
   }

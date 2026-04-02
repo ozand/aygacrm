@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, ExternalLink, Plus } from "lucide-react";
 import { addExternalRecord, deleteExternalRecord } from "@/lib/actions/external-records";
+import { SOURCES, VALID_SOURCE_KINDS, type Source, type Kind } from "@/lib/ingestion-conventions";
 
 interface ExternalRecordItem {
   id: string;
@@ -56,8 +57,20 @@ function getPreview(content: string | null): string | null {
 export function ExternalRecordsCard({ contactId, existingRecords }: ExternalRecordsCardProps) {
   const [isPending, startTransition] = useTransition();
   const [records, setRecords] = useState<ExternalRecordItem[]>(existingRecords);
-  const [source, setSource] = useState("other");
-  const [kind, setKind] = useState("reference");
+  const [source, setSource] = useState<Source>("other");
+  const [kind, setKind] = useState<string>(VALID_SOURCE_KINDS.other[0]);
+
+  // Get valid kinds for the current source
+  const validKinds = useMemo(() => VALID_SOURCE_KINDS[source], [source]);
+
+  // When source changes, reset kind to the first valid kind for that source
+  const handleSourceChange = (newSource: Source) => {
+    setSource(newSource);
+    const kinds = VALID_SOURCE_KINDS[newSource];
+    if (!kinds.includes(kind as Kind)) {
+      setKind(kinds[0]);
+    }
+  };
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [content, setContent] = useState("");
@@ -115,7 +128,7 @@ export function ExternalRecordsCard({ contactId, existingRecords }: ExternalReco
       }
 
       setSource("other");
-      setKind("reference");
+      setKind(VALID_SOURCE_KINDS.other[0]);
       setTitle("");
       setUrl("");
       setContent("");
@@ -208,23 +221,35 @@ export function ExternalRecordsCard({ contactId, existingRecords }: ExternalReco
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="external-record-source">Source *</Label>
-              <Input
+              <select
                 id="external-record-source"
                 value={source}
-                onChange={(e) => setSource(e.target.value)}
-                placeholder="telegram, notion, zoom"
+                onChange={(e) => handleSourceChange(e.target.value as Source)}
                 disabled={isPending}
-              />
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {SOURCES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="external-record-kind">Kind *</Label>
-              <Input
+              <select
                 id="external-record-kind"
                 value={kind}
                 onChange={(e) => setKind(e.target.value)}
-                placeholder="reference, transcript, page"
                 disabled={isPending}
-              />
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {validKinds.map((k: string) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

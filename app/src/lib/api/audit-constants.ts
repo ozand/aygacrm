@@ -57,6 +57,10 @@ export const AUDIT_ACTIONS = {
   RELATIONSHIP_CREATED: "relationship_created",
   RELATIONSHIP_DELETED: "relationship_deleted",
   
+  // External record actions
+  RECORD_CREATED: "record_created",
+  RECORD_DELETED: "record_deleted",
+
   // Call actions
   CALL_CREATED: "call_created",
   CALL_UPDATED: "call_updated",
