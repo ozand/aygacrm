@@ -256,6 +256,7 @@ model Contact {
   moodEvents         MoodTrackingEvent[]
   photos             Photo[]
   externalIdentities ExternalIdentity[]
+  externalRecords    ExternalRecord[]
   mergesAsPrimary    ContactMergeLog[]       @relation("PrimaryMergeContact")
   mergesAsSecondary  ContactMergeLog[]       @relation("SecondaryMergeContact")
   fieldProvenance    ContactFieldProvenance[]
@@ -1549,6 +1550,28 @@ model ExternalIdentity {
   @@unique([source, externalId])
   @@index([contactId])
   @@map("external_identities")
+}
+
+model ExternalRecord {
+  id         String   @id @default(uuid())
+  contactId  String
+  source     String   // telegram, todoist, notion, email, zoom, phone, linkedin, other
+  kind       String   // reference, note, transcript, task, page, message, meeting
+  externalId String?
+  url        String?
+  title      String?
+  content    String?
+  metadata   Json?
+  happenedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@index([source, externalId])
+  @@index([contactId, happenedAt])
+  @@map("external_records")
 }
 
 model ContactMergeLog {

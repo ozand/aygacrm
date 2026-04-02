@@ -143,6 +143,8 @@ function printUsage(): void {
   console.log("  notes add <contactId> --body <text>");
   console.log("  tasks list [--contact <id>] [--completed]");
   console.log("  tasks create <contactId> --name <text> [--due <date>]");
+  console.log("  records list <contactId>");
+  console.log("  records add <contactId> --source <src> --kind <kind> [--title <text>] [--url <url>] [--content <text>] [--external-id <id>] [--happened-at <date>]");
   console.log("  status");
 }
 
@@ -529,6 +531,117 @@ async function runStatus(): Promise<void> {
   }
 }
 
+async function runRecordsList(args: string[]): Promise<void> {
+  const vault = await getFirstVault();
+  if (!vault) {
+    console.log("No vault found.");
+    return;
+  }
+
+  const inputContactId = args[2];
+  if (!inputContactId) {
+    throw new Error("Missing contact id");
+  }
+
+  const contactId = await resolveContactId(vault.id, inputContactId);
+
+  const records = await db.externalRecord.findMany({
+    where: {
+      contactId,
+      contact: {
+        vaultId: vault.id,
+        deletedAt: null,
+      },
+    },
+    orderBy: [{ happenedAt: "desc" }, { createdAt: "desc" }],
+    take: 100,
+  });
+
+  const rows = records.map((record) => [
+    shortId(record.id),
+    record.source,
+    record.kind,
+    record.title ?? "-",
+    formatDate(record.happenedAt ?? record.createdAt),
+    record.url ?? "-",
+  ]);
+
+  printTable(["ID", "Source", "Kind", "Title", "Date", "URL"], rows);
+}
+
+async function runRecordsAdd(args: string[]): Promise<void> {
+  const vault = await getFirstVault();
+  if (!vault) {
+    console.log("No vault found.");
+    return;
+  }
+
+  const inputContactId = args[2];
+  if (!inputContactId) {
+    throw new Error("Missing contact id");
+  }
+
+  const source = getFlag(args, "source");
+  const kind = getFlag(args, "kind");
+  const title = getFlag(args, "title");
+  const url = getFlag(args, "url");
+  const content = getFlag(args, "content");
+  const externalId = getFlag(args, "external-id");
+  const happenedAtRaw = getFlag(args, "happened-at");
+
+  if (!source) {
+    throw new Error("Missing --source");
+  }
+  if (!kind) {
+    throw new Error("Missing --kind");
+  }
+  if (!title && !url && !content && !externalId) {
+    throw new Error("At least one of --title, --url, --content, or --external-id is required");
+  }
+
+  let happenedAt: Date | null = null;
+  if (happenedAtRaw) {
+    happenedAt = new Date(happenedAtRaw);
+    if (Number.isNaN(happenedAt.getTime())) {
+      throw new Error("Invalid --happened-at date");
+    }
+  }
+
+  const contactId = await resolveContactId(vault.id, inputContactId);
+  const contact = await db.contact.findFirst({
+    where: {
+      id: contactId,
+      vaultId: vault.id,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      nickname: true,
+    },
+  });
+
+  if (!contact) {
+    throw new Error("Contact not found");
+  }
+
+  const record = await db.externalRecord.create({
+    data: {
+      contactId: contact.id,
+      source,
+      kind,
+      title: title ?? null,
+      url: url ?? null,
+      content: content ?? null,
+      externalId: externalId ?? null,
+      happenedAt,
+    },
+  });
+
+  console.log(`Created record ${shortId(record.id)} for ${contactDisplayName(contact)}.`);
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
@@ -566,6 +679,16 @@ async function main(): Promise<void> {
 
   if (command === "tasks" && subcommand === "create") {
     await runTasksCreate(args);
+    return;
+  }
+
+  if (command === "records" && subcommand === "list") {
+    await runRecordsList(args);
+    return;
+  }
+
+  if (command === "records" && subcommand === "add") {
+    await runRecordsAdd(args);
     return;
   }
 

@@ -82,6 +82,8 @@ import { MoodTrackingForm } from "@/components/features/mood-tracking-form";
 import { ContactFeed } from "@/components/features/contact-feed";
 import { ExternalIdentityForm } from "@/components/features/external-identity-form";
 import { getExternalIdentitiesForContact } from "@/lib/actions/external-identities";
+import { getExternalRecordsForContact } from "@/lib/actions/external-records";
+import { ExternalRecordsCard } from "@/components/features/external-records-card";
 
 interface ContactDetailPageProps {
   params: Promise<{ id: string }>;
@@ -130,6 +132,7 @@ export default async function ContactDetailPage({
   const religions = await ensureDefaultReligions();
   const emotions = await ensureDefaultEmotions();
   const externalIdentities = await getExternalIdentitiesForContact(id);
+  const externalRecords = await getExternalRecordsForContact(id);
 
   // Build display name
   const displayName =
@@ -251,6 +254,24 @@ export default async function ContactDetailPage({
               contactId={contact.id}
               existingIdentities={externalIdentities}
             />
+          </CardContent>
+        </Card>
+
+        {/* External Records */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              External Records
+              {externalRecords.length > 0 && (
+                <span className="text-sm font-normal text-gray-500">
+                  ({externalRecords.length})
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExternalRecordsCard contactId={contact.id} existingRecords={externalRecords} />
           </CardContent>
         </Card>
 

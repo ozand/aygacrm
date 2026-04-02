@@ -15,6 +15,10 @@ Contact is the canonical record. The `ExternalIdentity` model maps one contact t
 
 The `ContactFieldProvenance` model tracks source attribution for individual field values on a contact. Each field change records which source wrote it, with what confidence, and who (user or agent) triggered the change. The `isActive` flag indicates the current "winning" value.
 
+## External content references
+
+The `ExternalRecord` model is the generic container for external relationship content and references. It stores links, short snippets, transcripts, and other curated artifacts with source, kind, optional external ID, optional URL, optional content, and happened-at time. This lets Monica preserve important context from systems like email, Telegram, LinkedIn, Zoom, phone calls, Todoist, and Notion without treating Monica as the raw source-of-truth system for those platforms.
+
 ## Golden record concept
 
 A golden record is one canonical contact merged from multiple source records. The `ContactMergeLog` model tracks merge/unmerge operations with full audit detail: which fields were taken from which contact, who approved the merge, and whether it was automatic or manual.
@@ -27,7 +31,7 @@ A golden record is one canonical contact merged from multiple source records. Th
 
 ## Current schema
 
-- 78 Prisma models (75 core + 3 golden record: ExternalIdentity, ContactMergeLog, ContactFieldProvenance)
+- 79 Prisma models (75 core + 4 golden record: ExternalIdentity, ExternalRecord, ContactMergeLog, ContactFieldProvenance)
 - 2 enums
 - Central axis: `Account → User → Vault → Contact`
 

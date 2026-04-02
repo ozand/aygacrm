@@ -8,11 +8,21 @@
 ## Current Priority: First Integrations (EPIC-0004)
 
 ### Next Up
-- [ ] Email connector (import contacts + interaction history)
-- [ ] Telegram connector
-- [ ] LinkedIn connector
+- [ ] Email ingestion adapter (agent-written references, snippets, and threads)
+- [ ] Telegram ingestion adapter (profiles, message links, curated context)
+- [ ] LinkedIn ingestion adapter (profiles and professional context)
+- [ ] Todoist ingestion adapter (task references)
+- [ ] Notion ingestion adapter (page/project references)
+- [ ] Zoom / phone transcript ingestion flow
 
 ### Done
+- [x] EPIC-0004 pivoted from native connectors to agent-driven ingestion contracts and curated external context storage
+- [x] `ExternalRecord` model added — generic storage for external references, snippets, tasks, pages, messages, meetings, and transcripts
+- [x] External records server actions (`external-records.ts`) — add, update, delete, list with vault ownership checks
+- [x] External records UI on contact detail page (`external-records-card.tsx`)
+- [x] CLI extended with `records list` and `records add`
+- [x] MCP extended with `monica_list_records` and `monica_add_record`
+- [x] Docs updated for agent-driven ingestion architecture (vision, data model, integration roadmap, EPIC-0004)
 - [x] CLI wrapper (`app/src/cli/monica-cli.ts`) — 7 commands: contacts list/get/search, notes add, tasks list/create, status
 - [x] Canonical field selection rules (`canonical-fields.ts`) — deterministic source priority, manual override wins, conflict detection
 - [x] Deleted stale root files: vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, storage.sqlite3, scripts/, utils/
@@ -89,11 +99,19 @@
 - [x] CLI wrapper for common operations
 
 ### EPIC-0004: First Integrations
-- [ ] Email connector (import contacts + interaction history)
-- [ ] Telegram connector
-- [ ] LinkedIn connector
-- [ ] Todoist sync (tasks bidirectional)
-- [ ] Notion sync (contacts/projects)
+- [x] Reframe EPIC-0004 around agent-driven ingestion instead of Monica-owned native connectors
+- [x] Add `ExternalRecord` model for curated external references, snippets, and transcripts
+- [x] Server actions for external records CRUD
+- [x] UI for external records on contact detail page
+- [x] CLI support for external records (`records list`, `records add`)
+- [x] MCP support for external records (`monica_list_records`, `monica_add_record`)
+- [x] Build verification — prisma generate/db push, tsc 0 errors, next build passes
+- [ ] Email ingestion adapter (references, snippets, thread links)
+- [ ] Telegram ingestion adapter (profiles, message links, curated context)
+- [ ] LinkedIn ingestion adapter (profiles, professional context)
+- [ ] Todoist ingestion adapter (task references)
+- [ ] Notion ingestion adapter (page and project references)
+- [ ] Zoom / phone transcript ingestion flow
 
 ---
 
@@ -113,9 +131,9 @@
 - App lives at `app/src/...`, alias `@/*` -> `./src/*`
 - Package manager: pnpm (in `app/`)
 - Stack: Next.js 16.1.6, React 19.2.3, Prisma 7.3.0, NextAuth 5 beta
-- 78 Prisma models (75 core + 3 golden record), 2 enums
+- 79 Prisma models (75 core + 4 golden record), 2 enums
 - Detailed docs: `docs/product/`, `docs/architecture/`, `docs/backlog/`
 - CLI: `pnpm exec tsx src/cli/monica-cli.ts <command>` from `app/` (direct DB, no auth)
 - Dev server: `pnpm dev --hostname 127.0.0.1 --port 4000` (port 3000 blocked by Windows EACCES)
-- Database: PostgreSQL 18.1 local, `monica` DB, 75 tables
+- Database: PostgreSQL 18.1 local, `monica` DB, 79 tables
 - `.env` in `app/` — `DATABASE_URL=postgresql://postgres@localhost:5432/monica`

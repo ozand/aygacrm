@@ -178,6 +178,32 @@ const createTaskSchema = z.object({
   dueAt: isoDatetimeSchema.optional(),
 });
 
+const listRecordsSchema = z.object({
+  contactId: z.string().min(1),
+});
+
+const addRecordSchema = z
+  .object({
+    contactId: z.string().min(1),
+    source: z.string().min(1),
+    kind: z.string().min(1),
+    externalId: z.string().min(1).optional(),
+    url: z.string().url().optional(),
+    title: z.string().min(1).optional(),
+    content: z.string().min(1).optional(),
+    happenedAt: isoDatetimeSchema.optional(),
+  })
+  .refine(
+    (value) =>
+      value.externalId !== undefined ||
+      value.url !== undefined ||
+      value.title !== undefined ||
+      value.content !== undefined,
+    {
+      message: "At least one of externalId, url, title, or content must be provided",
+    }
+  );
+
 const updateTaskSchema = z
   .object({
     taskId: z.string().min(1),
@@ -620,6 +646,67 @@ const toolDefinitions = {
       };
     },
   }),
+  monica_list_records: defineTool({
+    description: "List external records for a contact.",
+    ability: "notes:read",
+    parameters: {
+      type: "object",
+      properties: {
+        contactId: { type: "string" },
+      },
+      required: ["contactId"],
+      additionalProperties: false,
+    },
+    schema: listRecordsSchema,
+    execute: async (auth, args) => {
+      const contact = await getScopedContactOrThrow(args.contactId, auth);
+
+      const records = await db.externalRecord.findMany({
+        where: { contactId: contact.id },
+        orderBy: [{ happenedAt: "desc" }, { createdAt: "desc" }],
+      });
+
+      return records;
+    },
+  }),
+  monica_add_record: defineTool({
+    description: "Add an external record to a contact.",
+    ability: "notes:write",
+    parameters: {
+      type: "object",
+      properties: {
+        contactId: { type: "string" },
+        source: { type: "string" },
+        kind: { type: "string" },
+        externalId: { type: "string" },
+        url: { type: "string", format: "uri" },
+        title: { type: "string" },
+        content: { type: "string" },
+        happenedAt: { type: "string", format: "date-time" },
+      },
+      required: ["contactId", "source", "kind"],
+      additionalProperties: false,
+    },
+    schema: addRecordSchema,
+    execute: async (auth, args) => {
+      const contact = await getScopedContactOrThrow(args.contactId, auth);
+
+      const record = await db.externalRecord.create({
+        data: {
+          contactId: contact.id,
+          source: args.source,
+          kind: args.kind,
+          externalId: args.externalId ?? null,
+          url: args.url ?? null,
+          title: args.title ?? null,
+          content: args.content ?? null,
+          happenedAt: args.happenedAt ? dateFromString(args.happenedAt) : null,
+        },
+      });
+
+      return record;
+    },
+  }),
   monica_update_task: defineTool({
     description: "Update task details and completion status.",
     ability: "tasks:write",
@@ -791,6 +878,20 @@ async function executeToolByName(
         throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
       }
       return toolDefinitions.monica_create_task.execute(auth, argsResult.data, request);
+    }
+    case "monica_list_records": {
+      const argsResult = toolDefinitions.monica_list_records.schema.safeParse(rawArguments);
+      if (!argsResult.success) {
+        throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
+      }
+      return toolDefinitions.monica_list_records.execute(auth, argsResult.data, request);
+    }
+    case "monica_add_record": {
+      const argsResult = toolDefinitions.monica_add_record.schema.safeParse(rawArguments);
+      if (!argsResult.success) {
+        throw new ToolError(normalizeZodError(argsResult.error), "VALIDATION_ERROR", 400);
+      }
+      return toolDefinitions.monica_add_record.execute(auth, argsResult.data, request);
     }
     case "monica_update_task": {
       const argsResult = toolDefinitions.monica_update_task.schema.safeParse(rawArguments);

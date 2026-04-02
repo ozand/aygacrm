@@ -2,35 +2,39 @@
 
 ## Summary
 
-Build the first source connectors that feed real-world relationship data into Monica. This epic establishes the integration framework and delivers the first production-shaped connectors so the golden record begins to reflect live external systems rather than only manual entry.
+Build the first storage and ingestion interfaces for external relationship references and content. This epic establishes how Monica receives curated data from external agents and systems so the golden record and relationship memory can reflect real-world context without Monica owning native source integrations.
 
 ## Problem
 
-Without integrations, Monica is only a manual CRM. The product’s core value depends on aggregating contact data from the channels where relationships actually happen. The system needs a repeatable connector pattern and a small set of high-value sources to validate how external identities, provenance, and duplicate detection work in practice.
+Without a structured ingestion layer, Monica is only a manual CRM. The product’s core value depends on storing important relationship context from the channels where relationships actually happen. The system needs a repeatable external content/reference model and a small set of high-value sources to validate provenance, attribution, and duplicate handling in practice.
 
 ## Outcome
 
-Monica can ingest and sync contact data from at least two or three priority external systems. Imported records create or update external identities, write provenance data, and enrich the canonical contact without losing source history.
+Monica can receive structured references, snippets, and transcripts from priority external systems. Ingested items create or update external identities where applicable, write provenance data, and enrich the canonical contact without losing source history.
 
 ## Scope
 
 ### In scope
 
-- Define an integration framework with a clear connector interface
-- Standardize normalization logic so each source maps into Monica’s canonical contact model
-- Add error handling and retry behavior for connector failures
-- Build an email connector that extracts contacts from email metadata
-- Build a Telegram connector that syncs contacts and relevant identity data from Telegram contacts/chats
-- Build a LinkedIn connector that enriches contacts with professional profile data
-- Ensure all imported data is written with provenance and linked to existing or newly created external identities
-- Make duplicate detection work across imported sources so new data does not fragment the golden record
+- Define a storage model for external references, snippets, and transcripts
+- Define a source-aware ingestion contract for API, CLI, and MCP writers
+- Standardize normalization logic so each source maps into Monica’s internal relationship context model
+- Add validation, attribution, and retry behavior for ingestion failures
+- Support email as a source of curated contact context and references
+- Support Telegram as a source of curated contact context and references
+- Support LinkedIn as a source of professional references and identity context
+- Support Todoist and Notion as sources of related context and references
+- Support Zoom and phone transcripts as first-class content types
+- Ensure all ingested items are written with provenance and linked to existing or newly created external identities when applicable
+- Make duplicate detection work across ingested references so new data does not fragment the golden record
 
 ### Out of scope
 
-- WhatsApp, VK, and Facebook connectors
-- Conversation-content import from message bodies as a primary feature
+- Native source authentication flows
+- Webhooks, polling jobs, or background sync runners as Monica-owned responsibilities
 - Two-way synchronization back to source systems
-- Real-time sync; batch or scheduled sync is sufficient for the first wave
+- WhatsApp, VK, and Facebook source support for this epic
+- Indiscriminate full-content ingestion as the default behavior
 
 ## Related docs
 
@@ -42,12 +46,11 @@ Monica can ingest and sync contact data from at least two or three priority exte
 
 ## Success criteria
 
-- The integration framework defines a stable connector contract that future sources can implement consistently
-- The email connector imports contacts and links them to email-based external identities
-- The Telegram connector syncs contacts and links phone or username identities where available
-- The LinkedIn connector enriches existing contacts with professional profile data without duplicating records
-- Imported records retain provenance for all significant fields
-- Duplicate detection works across at least the first integrated sources
+- The storage model can represent external references, snippets, and transcripts with source attribution
+- The ingestion contract supports API, CLI, and MCP writes from external agents or systems
+- Email, Telegram, LinkedIn, Todoist, Notion, Zoom, and phone transcript content can be ingested in a source-aware way
+- Ingested items retain provenance for all significant fields and references
+- Duplicate detection works across at least the first ingested sources
 
 ## Dependencies
 
@@ -57,6 +60,6 @@ Monica can ingest and sync contact data from at least two or three priority exte
 
 ## Risks / open questions
 
-- What authentication and consent model will each source connector require?
-- Which source should be implemented first to maximize signal and minimize integration complexity?
-- How much normalization should happen in the connector versus in Monica’s internal ingestion layer?
+- Which content types should be normalized at ingest time versus stored as lightly processed references?
+- Which source should be implemented first to maximize signal and minimize ingestion complexity?
+- What attribution and retention rules should apply to transcripts and reference snippets?
