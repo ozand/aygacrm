@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -11,6 +13,11 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createJournalSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
 
 // GET /api/v1/journals - List all journals
 export const GET = withApiAuth(
@@ -59,21 +66,25 @@ export const GET = withApiAuth(
 
     return apiPaginated(data, page, limit, total, getBaseUrl(request));
   },
-  "journal:read"
+  "journals:read"
 );
 
 // POST /api/v1/journals - Create a journal
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createJournalSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { name, description } = validated.data;
+
     try {
-      const body = await request.json();
-
-      const { name, description } = body;
-
-      if (!name) {
-        return apiError("INVALID_PARAMS", 400, "name is required");
-      }
-
       // Get user's first vault
       const userVault = await db.userVault.findFirst({
         where: { userId: context.userId },
@@ -105,9 +116,10 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
-  "journal:write"
+  "journals:write"
 );

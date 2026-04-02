@@ -51,6 +51,7 @@ export const API_ERRORS = {
   INVALID_PARAMS: { code: 41, message: "Invalid parameters." },
   UNAUTHORIZED: { code: 42, message: "Unauthorized. Please provide a valid API token." },
   FORBIDDEN: { code: 43, message: "You don't have permission to access this resource." },
+  INTERNAL_ERROR: { code: 50, message: "An internal error occurred." },
 } as const;
 
 // Helper to create error response

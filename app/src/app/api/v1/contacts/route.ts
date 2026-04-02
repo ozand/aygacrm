@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,21 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createContactSchema = z.object({
+  first_name: z.string().min(1),
+  last_name: z.string().optional(),
+  nickname: z.string().optional(),
+  middle_name: z.string().optional(),
+  maiden_name: z.string().optional(),
+  gender_id: z.string().optional(),
+  pronoun_id: z.string().optional(),
+  vault_id: z.string().optional(),
+  is_birthdate_known: z.boolean().optional(),
+  birthdate_day: z.number().optional(),
+  birthdate_month: z.number().optional(),
+  birthdate_year: z.number().optional(),
+});
 
 // GET /api/v1/contacts - List all contacts
 export const GET = withApiAuth(
@@ -121,20 +138,19 @@ export const GET = withApiAuth(
 // POST /api/v1/contacts - Create a contact
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createContactSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { first_name, last_name, nickname, gender_id, vault_id } = validated.data;
+
     try {
-      const body = await request.json();
-
-      const {
-        first_name,
-        last_name,
-        nickname,
-        gender_id,
-        vault_id,
-      } = body;
-
-      if (!first_name) {
-        return apiError("INVALID_PARAMS", 400, "first_name is required");
-      }
 
       // Verify user has access to the vault
       let vaultId = vault_id;
@@ -196,8 +212,9 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "contacts:write"

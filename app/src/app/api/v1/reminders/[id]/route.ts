@@ -1,13 +1,20 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateReminderSchema = z.object({
+  reminder_choice: z.enum(["day", "week", "month"]).optional(),
+  number_of_days_before: z.number().int().min(0).optional(),
+});
 
 // Helper to get a reminder with access check
 async function getReminderWithAccess(reminderId: string, userId: string) {
@@ -130,21 +137,24 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Reminder not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateReminderSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { reminder_choice, number_of_days_before } = validated.data;
+
     try {
-      const body = await request.json();
-      const { reminder_choice, number_of_days_before } = body;
 
       // Build update data
       const updateData: Record<string, unknown> = {};
 
       if (reminder_choice !== undefined) {
-        if (!["day", "week", "month"].includes(reminder_choice)) {
-          return apiError(
-            "INVALID_PARAMS",
-            400,
-            "reminder_choice must be day, week, or month"
-          );
-        }
         updateData.reminderChoice = reminder_choice;
       }
 
@@ -182,8 +192,9 @@ export const PUT = withApiAuth(
       });
 
       return apiSuccess(transformReminder(updatedReminder));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "reminders:write"

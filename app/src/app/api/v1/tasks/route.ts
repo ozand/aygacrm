@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,18 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createTaskSchema = z
+  .object({
+    contact_id: z.string().min(1),
+    name: z.string().min(1).optional(),
+    label: z.string().min(1).optional(),
+    description: z.string().optional(),
+    due_at: z.string().optional(),
+  })
+  .refine((data) => data.name || data.label, {
+    message: "Either name or label is required",
+  });
 
 // GET /api/v1/tasks - List all tasks
 export const GET = withApiAuth(
@@ -103,20 +117,23 @@ export const GET = withApiAuth(
 // POST /api/v1/tasks - Create a task
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createTaskSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { contact_id, name, label, description, due_at } = validated.data;
+    const taskName = name ?? label;
+    if (!taskName) {
+      return apiError("INVALID_PARAMS", 400, "name is required");
+    }
+
     try {
-      const body = await request.json();
-
-      const { contact_id, name, label, description, due_at } = body;
-      const taskName = name ?? label;
-
-      if (!contact_id) {
-        return apiError("INVALID_PARAMS", 400, "contact_id is required");
-      }
-
-      if (!taskName) {
-        return apiError("INVALID_PARAMS", 400, "name is required");
-      }
-
       // Verify user has access to the contact
       const contact = await db.contact.findFirst({
         where: {
@@ -142,16 +159,6 @@ export const POST = withApiAuth(
           description: description || null,
           dueAt: due_at ? new Date(due_at) : null,
         },
-        include: {
-          contact: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              nickname: true,
-            },
-          },
-        },
       });
 
       return apiSuccess(
@@ -164,19 +171,20 @@ export const POST = withApiAuth(
           completed_at: task.completedAt?.toISOString() || null,
           due_at: task.dueAt?.toISOString() || null,
           contact: {
-            id: task.contact.id,
+            id: contact.id,
             object: "contact",
-            first_name: task.contact.firstName,
-            last_name: task.contact.lastName,
-            nickname: task.contact.nickname,
+            first_name: contact.firstName,
+            last_name: contact.lastName,
+            nickname: contact.nickname,
           },
           created_at: task.createdAt.toISOString(),
           updated_at: task.updatedAt.toISOString(),
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "tasks:write"

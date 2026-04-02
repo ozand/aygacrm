@@ -1,13 +1,21 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateActivitySchema = z.object({
+  summary: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  happened_at: z.string().optional(),
+});
 
 // Helper to get an activity with access check
 async function getActivityWithAccess(activityId: string, userId: string) {
@@ -121,9 +129,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Activity not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateActivitySchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { summary, description, happened_at } = validated.data;
+
     try {
-      const body = await request.json();
-      const { summary, description, happened_at } = body;
 
       // Build update data
       const updateData: Record<string, unknown> = {};
@@ -168,8 +186,9 @@ export const PUT = withApiAuth(
       });
 
       return apiSuccess(transformActivity(updatedActivity));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "activities:write"

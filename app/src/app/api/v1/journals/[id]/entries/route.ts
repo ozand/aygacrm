@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,21 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createEntrySchema = z.object({
+  title: z.string().optional(),
+  content: z.string().optional(),
+  written_at: z.string().optional(),
+  sections: z
+    .array(
+      z.object({
+        label: z.string().optional(),
+        content: z.string().optional(),
+        position: z.number().int().optional(),
+      })
+    )
+    .optional(),
+});
 
 // Helper to verify journal access
 async function getJournalWithAccess(journalId: string, userId: string) {
@@ -106,7 +123,7 @@ export const GET = withApiAuth(
 
     return apiPaginated(data, page, limit, total, getBaseUrl(request));
   },
-  "journal:read"
+  "journals:read"
 );
 
 // POST /api/v1/journals/[id]/entries - Create an entry
@@ -128,9 +145,19 @@ export const POST = withApiAuth(
       return apiError("NOT_FOUND", 404, "Journal not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createEntrySchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { title, content, written_at, sections } = validated.data;
+
     try {
-      const body = await request.json();
-      const { title, content, written_at, slice_of_life_id, sections } = body;
 
       // Create post
       const post = await db.post.create({
@@ -139,7 +166,6 @@ export const POST = withApiAuth(
           title: title || null,
           content: content || null,
           writtenAt: written_at ? new Date(written_at) : new Date(),
-          sliceOfLifeId: slice_of_life_id || null,
           sections: sections
             ? {
                 create: sections.map(
@@ -193,9 +219,10 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
-  "journal:write"
+  "journals:write"
 );

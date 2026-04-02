@@ -1,13 +1,22 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateCallSchema = z.object({
+  called_at: z.string().optional(),
+  duration: z.number().int().nullable().optional(),
+  description: z.string().nullable().optional(),
+  call_reason_id: z.string().nullable().optional(),
+});
 
 // Helper to get a call with access check
 async function getCallWithAccess(callId: string, userId: string) {
@@ -123,10 +132,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Call not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateCallSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { called_at, duration, description, call_reason_id } = validated.data;
+
     try {
-      const body = await request.json();
-      const { called_at, duration, description, call_reason_id } =
-        body;
 
       // Build update data
       const updateData: Record<string, unknown> = {};
@@ -174,8 +192,9 @@ export const PUT = withApiAuth(
       });
 
       return apiSuccess(transformCall(updatedCall));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "calls:write"

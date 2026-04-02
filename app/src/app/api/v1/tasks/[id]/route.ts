@@ -1,13 +1,22 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateTaskSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  completed: z.boolean().optional(),
+  due_at: z.string().nullable().optional(),
+});
 
 // Helper to get a task with access check
 async function getTaskWithAccess(taskId: string, userId: string) {
@@ -113,10 +122,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Task not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateTaskSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { name: taskName, description, completed, due_at } = validated.data;
+
     try {
-      const body = await request.json();
-      const { name, label, description, completed, due_at } = body;
-      const taskName = name ?? label;
 
       // Build update data
       const updateData: Record<string, unknown> = {};
@@ -168,8 +186,9 @@ export const PUT = withApiAuth(
       });
 
       return apiSuccess(transformTask(updatedTask));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "tasks:write"

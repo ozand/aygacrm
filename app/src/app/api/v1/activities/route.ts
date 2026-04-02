@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,13 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createActivitySchema = z.object({
+  contact_id: z.string().min(1),
+  summary: z.string().min(1),
+  description: z.string().optional(),
+  happened_at: z.string().optional(),
+});
 
 // GET /api/v1/activities - List all activities
 export const GET = withApiAuth(
@@ -108,15 +117,19 @@ export const GET = withApiAuth(
 // POST /api/v1/activities - Create an activity
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createActivitySchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { contact_id, summary, description, happened_at } = validated.data;
+
     try {
-      const body = await request.json();
-
-      const { contact_id, summary, description, happened_at } = body;
-
-      if (!contact_id) {
-        return apiError("INVALID_PARAMS", 400, "contact_id is required");
-      }
-
       // Verify user has access to the contact
       const contact = await db.contact.findFirst({
         where: {
@@ -178,8 +191,9 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "activities:write"

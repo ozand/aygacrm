@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,11 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateJournalSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+});
 
 // Helper to verify journal access
 async function getJournalWithAccess(journalId: string, userId: string) {
@@ -66,7 +73,7 @@ export const GET = withApiAuth(
       updated_at: journal.updatedAt.toISOString(),
     });
   },
-  "journal:read"
+  "journals:read"
 );
 
 // PUT /api/v1/journals/[id] - Update a journal
@@ -88,9 +95,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Journal not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateJournalSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { name, description } = validated.data;
+
     try {
-      const body = await request.json();
-      const { name, description } = body;
 
       const updateData: Record<string, unknown> = {};
 
@@ -128,11 +145,12 @@ export const PUT = withApiAuth(
         created_at: updatedJournal.createdAt.toISOString(),
         updated_at: updatedJournal.updatedAt.toISOString(),
       });
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
-  "journal:write"
+  "journals:write"
 );
 
 // DELETE /api/v1/journals/[id] - Delete a journal
@@ -160,5 +178,5 @@ export const DELETE = withApiAuth(
 
     return apiSuccess({ deleted: true, id: journalId });
   },
-  "journal:write"
+  "journals:write"
 );

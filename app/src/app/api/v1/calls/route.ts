@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,14 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createCallSchema = z.object({
+  contact_id: z.string().min(1),
+  called_at: z.string().min(1),
+  duration: z.number().int().optional(),
+  description: z.string().optional(),
+  call_reason_id: z.string().optional(),
+});
 
 // GET /api/v1/calls - List all calls
 export const GET = withApiAuth(
@@ -108,21 +118,19 @@ export const GET = withApiAuth(
 // POST /api/v1/calls - Create a call
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createCallSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { contact_id, called_at, duration, description, call_reason_id } = validated.data;
+
     try {
-      const body = await request.json();
-
-      const {
-        contact_id,
-        called_at,
-        duration,
-        description,
-        call_reason_id,
-      } = body;
-
-      if (!contact_id) {
-        return apiError("INVALID_PARAMS", 400, "contact_id is required");
-      }
-
       // Verify user has access to the contact
       const contact = await db.contact.findFirst({
         where: {
@@ -144,7 +152,7 @@ export const POST = withApiAuth(
       const call = await db.call.create({
         data: {
           contactId: contact_id,
-          calledAt: called_at ? new Date(called_at) : new Date(),
+          calledAt: new Date(called_at),
           duration: duration || null,
           description: description || null,
           callReasonId: call_reason_id || null,
@@ -192,8 +200,9 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "calls:write"

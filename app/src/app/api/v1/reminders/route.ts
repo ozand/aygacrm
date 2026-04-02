@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -12,6 +14,13 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createReminderSchema = z.object({
+  contact_id: z.string().min(1),
+  contact_important_date_id: z.string().min(1),
+  reminder_choice: z.enum(["day", "week", "month"]),
+  number_of_days_before: z.number().int().min(0).optional(),
+});
 
 // GET /api/v1/reminders - List all reminders
 export const GET = withApiAuth(
@@ -118,37 +127,24 @@ export const GET = withApiAuth(
 // POST /api/v1/reminders - Create a reminder
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createReminderSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const {
+      contact_id,
+      contact_important_date_id,
+      reminder_choice,
+      number_of_days_before,
+    } = validated.data;
+
     try {
-      const body = await request.json();
-
-      const {
-        contact_id,
-        important_date_id,
-        reminder_choice,
-        number_of_days_before,
-      } = body;
-
-      if (!contact_id) {
-        return apiError("INVALID_PARAMS", 400, "contact_id is required");
-      }
-
-      if (!important_date_id) {
-        return apiError("INVALID_PARAMS", 400, "important_date_id is required");
-      }
-
-      if (!reminder_choice) {
-        return apiError("INVALID_PARAMS", 400, "reminder_choice is required");
-      }
-
-      // Validate reminder_choice
-      if (!["day", "week", "month"].includes(reminder_choice)) {
-        return apiError(
-          "INVALID_PARAMS",
-          400,
-          "reminder_choice must be day, week, or month"
-        );
-      }
-
       // Verify user has access to the contact
       const contact = await db.contact.findFirst({
         where: {
@@ -169,7 +165,7 @@ export const POST = withApiAuth(
       // Verify the important date exists and belongs to the contact
       const importantDate = await db.contactImportantDate.findFirst({
         where: {
-          id: important_date_id,
+          id: contact_important_date_id,
           contactId: contact_id,
         },
       });
@@ -182,7 +178,7 @@ export const POST = withApiAuth(
       const reminder = await db.contactReminder.create({
         data: {
           contactId: contact_id,
-          contactImportantDateId: important_date_id,
+          contactImportantDateId: contact_important_date_id,
           reminderChoice: reminder_choice,
           numberOfDaysBefore: number_of_days_before || 0,
         },
@@ -234,8 +230,9 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "reminders:write"

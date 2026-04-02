@@ -8,11 +8,16 @@
 ## Current Priority: Agent Access Layer (EPIC-0003)
 
 ### Next Up
-- [ ] Harden API v1 — consistent error responses, pagination, filtering
 - [ ] CLI wrapper for common operations
-- [ ] MCP server with safe contact/interaction tools
+- [ ] Agent audit trail and permission scoping
 
 ### Done
+- [x] Harden API v1 — Zod validation on all 20 POST/PUT endpoints, proper error separation (parse/validation/business/internal), INTERNAL_ERROR code added
+- [x] MCP route migrated to `app/src/app/api/mcp/route.ts` — proper auth via validateApiToken, 9 tools with Zod validation, no SDK dependency
+- [x] Ability naming normalized — `journal:*` → `journals:*` in 4 route files
+- [x] User route fixed — returns 404 instead of `apiSuccess(null)`
+- [x] Old MCP route deleted (`app/api/mcp/route.ts`)
+- [x] Shared validation helper created (`app/src/lib/api/validation.ts`)
 - [x] Fix duplicate JournalEntry in Prisma schema
 - [x] Generate Prisma client successfully
 - [x] Fix avatar/photos — delete 6 wrongly-placed files, fix edit page imports
@@ -32,6 +37,9 @@
 - [x] Dev server verified — `pnpm dev --hostname 127.0.0.1 --port 4000` starts successfully
 - [x] Reports page — 3 new reports (Important Dates, Activity Summary, Gifts & Loans)
 - [x] Created `report-stats.ts` server actions for vault-wide report aggregation
+- [x] API v1 hardened — Zod validation, error separation, ability normalization
+- [x] MCP route migrated — proper auth, 9 tools, typed, no SDK dependency
+- [x] Shared `validation.ts` helper created for API routes
 
 ---
 
@@ -41,7 +49,7 @@
 - [x] Build passes without DB connection
 - [x] Dev environment works end-to-end
 - [x] Reports page — 3 reports implemented (Geographical Distribution deferred)
-- [ ] MCP route — move from `app/api/mcp/` to `app/src/app/api/mcp/` (deferred to EPIC-0003)
+- [x] MCP route — moved to `app/src/app/api/mcp/route.ts` (done in EPIC-0003)
 
 ### EPIC-0002: Golden Record Foundation
 - [ ] Design identity resolution model (external IDs, source attribution)
@@ -50,9 +58,9 @@
 - [ ] Canonical field selection rules
 
 ### EPIC-0003: Agent Access Layer
-- [ ] Harden API v1 — consistent error responses, pagination, filtering
+- [x] Harden API v1 — Zod schemas, proper error handling, ability normalization
+- [x] MCP server — 9 tools with proper auth, Zod validation, vault scoping
 - [ ] CLI wrapper for common operations
-- [ ] MCP server with safe contact/interaction tools
 - [ ] Agent audit trail and permission scoping
 
 ### EPIC-0004: First Integrations
@@ -65,11 +73,12 @@
 ---
 
 ## Tech Debt
-- [ ] `app/api/mcp/route.ts` has `// @ts-nocheck` — needs proper typing or removal
+- [x] `app/api/mcp/route.ts` had `// @ts-nocheck` — replaced with properly typed route at `app/src/app/api/mcp/route.ts`
 - [ ] `formData.get("label")` in tasks.ts — FormData key should match Prisma field `name`
 - [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
 - [ ] Dual lockfiles: root `package-lock.json` vs `app/pnpm-lock.yaml`
+- [ ] Legacy routes still exist at `app/api/monica/v1/` and `app/api/upload/` (outside src tree)
 
 ---
 

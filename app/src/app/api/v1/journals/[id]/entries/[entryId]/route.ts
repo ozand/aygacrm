@@ -1,13 +1,29 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateEntrySchema = z.object({
+  title: z.string().nullable().optional(),
+  content: z.string().nullable().optional(),
+  sections: z
+    .array(
+      z.object({
+        label: z.string().optional(),
+        content: z.string().optional(),
+        position: z.number().int().optional(),
+      })
+    )
+    .optional(),
+});
 
 // Helper to verify journal access and get entry
 async function getEntryWithAccess(
@@ -131,7 +147,7 @@ export const GET = withApiAuth(
 
     return apiSuccess(transformEntry(entry));
   },
-  "journal:read"
+  "journals:read"
 );
 
 // PUT /api/v1/journals/[id]/entries/[entryId] - Update an entry
@@ -158,10 +174,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Journal entry not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateEntrySchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { title, content, sections } = validated.data;
+
     try {
-      const body = await request.json();
-      const { title, content, written_at, published_at, slice_of_life_id, sections } =
-        body;
 
       const updateData: Record<string, unknown> = {};
 
@@ -171,18 +196,6 @@ export const PUT = withApiAuth(
 
       if (content !== undefined) {
         updateData.content = content || null;
-      }
-
-      if (written_at !== undefined) {
-        updateData.writtenAt = new Date(written_at);
-      }
-
-      if (published_at !== undefined) {
-        updateData.publishedAt = published_at ? new Date(published_at) : null;
-      }
-
-      if (slice_of_life_id !== undefined) {
-        updateData.sliceOfLifeId = slice_of_life_id || null;
       }
 
       // Update entry
@@ -270,11 +283,12 @@ export const PUT = withApiAuth(
       }
 
       return apiSuccess(transformEntry(updatedEntry));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
-  "journal:write"
+  "journals:write"
 );
 
 // DELETE /api/v1/journals/[id]/entries/[entryId] - Delete an entry
@@ -307,5 +321,5 @@ export const DELETE = withApiAuth(
 
     return apiSuccess({ deleted: true, id: entryId });
   },
-  "journal:write"
+  "journals:write"
 );

@@ -1,13 +1,28 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateContactSchema = z.object({
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().optional(),
+  nickname: z.string().optional(),
+  middle_name: z.string().optional(),
+  maiden_name: z.string().optional(),
+  job_position: z.string().optional(),
+  gender_id: z.string().nullable().optional(),
+  pronoun_id: z.string().nullable().optional(),
+  company_id: z.string().nullable().optional(),
+  listed: z.boolean().optional(),
+});
 
 // GET /api/v1/contacts/:id
 export const GET = withApiAuth(
@@ -225,17 +240,20 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404);
     }
 
-    try {
-      const body = await request.json();
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
 
-      const {
-        first_name,
-        last_name,
-        nickname,
-        gender_id,
-        pronoun_id,
-        job_position,
-      } = body;
+    const validated = validateBody(updateContactSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { first_name, last_name, nickname, gender_id, pronoun_id, job_position } =
+      validated.data;
+
+    try {
 
       const contact = await db.contact.update({
         where: { id: contactId },
@@ -272,8 +290,9 @@ export const PUT = withApiAuth(
         created_at: contact.createdAt.toISOString(),
         updated_at: contact.updatedAt.toISOString(),
       });
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "contacts:write"

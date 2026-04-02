@@ -1,13 +1,19 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateTagSchema = z.object({
+  name: z.string().min(1),
+});
 
 // Helper to slugify tag name
 function slugify(name: string): string {
@@ -88,13 +94,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Tag not found");
     }
 
-    try {
-      const body = await request.json();
-      const { name } = body;
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
 
-      if (!name) {
-        return apiError("INVALID_PARAMS", 400, "name is required");
-      }
+    const validated = validateBody(updateTagSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { name } = validated.data;
+
+    try {
 
       const newSlug = slugify(name);
 
@@ -141,8 +153,9 @@ export const PUT = withApiAuth(
         created_at: updatedTag.createdAt.toISOString(),
         updated_at: updatedTag.updatedAt.toISOString(),
       });
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "tags:write"

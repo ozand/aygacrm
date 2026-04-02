@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
@@ -11,6 +13,10 @@ import {
   getBaseUrl,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const createTagSchema = z.object({
+  name: z.string().min(1),
+});
 
 // Helper to slugify tag name
 function slugify(name: string): string {
@@ -67,15 +73,19 @@ export const GET = withApiAuth(
 // POST /api/v1/tags - Create a tag
 export const POST = withApiAuth(
   async (request: NextRequest, context: ApiAuthContext) => {
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(createTagSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { name } = validated.data;
+
     try {
-      const body = await request.json();
-
-      const { name } = body;
-
-      if (!name) {
-        return apiError("INVALID_PARAMS", 400, "name is required");
-      }
-
       const slug = slugify(name);
 
       // Check if tag with same slug exists
@@ -117,8 +127,9 @@ export const POST = withApiAuth(
         },
         201
       );
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "tags:write"

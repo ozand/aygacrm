@@ -1,13 +1,21 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateNoteSchema = z.object({
+  body: z.string().min(1).optional(),
+  title: z.string().nullable().optional(),
+  emotion_id: z.string().nullable().optional(),
+});
 
 // Helper to get a note with access check
 async function getNoteWithAccess(noteId: number, userId: string) {
@@ -134,9 +142,19 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Note not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateNoteSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { title, body: noteBody, emotion_id } = validated.data;
+
     try {
-      const body = await request.json();
-      const { title, body: noteBody, emotion_id } = body;
 
       // Build update data
       const updateData: Record<string, unknown> = {};
@@ -191,8 +209,9 @@ export const PUT = withApiAuth(
       });
 
       return apiSuccess(transformNote(updatedNote));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "notes:write"

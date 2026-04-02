@@ -1,13 +1,26 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { parseJsonBody, validateBody } from "@/lib/api/validation";
 import {
   withApiAuth,
   apiSuccess,
   apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
+
+const updateGiftSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  amount: z.number().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  url: z.string().nullable().optional(),
+  status: z.enum(["idea", "planned", "given", "received"]).optional(),
+  date: z.string().nullable().optional(),
+  occasion_id: z.string().nullable().optional(),
+});
 
 // Helper to get a gift with access check
 async function getGiftWithAccess(giftId: string, userId: string) {
@@ -127,10 +140,20 @@ export const PUT = withApiAuth(
       return apiError("NOT_FOUND", 404, "Gift not found");
     }
 
+    const parsed = await parseJsonBody(request);
+    if ("error" in parsed) {
+      return parsed.error;
+    }
+
+    const validated = validateBody(updateGiftSchema, parsed.data);
+    if ("error" in validated) {
+      return validated.error;
+    }
+
+    const { name, description, amount, currency, url, status, date, occasion_id } =
+      validated.data;
+
     try {
-      const body = await request.json();
-      const { name, description, amount, currency, url, status, date, occasion_id } =
-        body;
 
       // Build update data
       const updateData: Record<string, unknown> = {};
@@ -159,14 +182,6 @@ export const PUT = withApiAuth(
       }
 
       if (status !== undefined) {
-        const validStatuses = ["idea", "planned", "given", "received"];
-        if (!validStatuses.includes(status)) {
-          return apiError(
-            "INVALID_PARAMS",
-            400,
-            `status must be one of: ${validStatuses.join(", ")}`
-          );
-        }
         updateData.status = status;
       }
 
@@ -205,8 +220,9 @@ export const PUT = withApiAuth(
       });
 
       return apiSuccess(transformGift(updatedGift));
-    } catch {
-      return apiError("JSON_PARSE_ERROR", 400);
+    } catch (error) {
+      console.error("Error:", error);
+      return apiError("INTERNAL_ERROR", 500);
     }
   },
   "gifts:write"

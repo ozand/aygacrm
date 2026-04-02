@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import {
   withApiAuth,
   apiSuccess,
+  apiError,
   ApiAuthContext,
 } from "@/lib/api/auth";
 
@@ -24,7 +25,7 @@ export const GET = withApiAuth(
     });
 
     if (!user) {
-      return apiSuccess(null);
+      return apiError("NOT_FOUND", 404, "User not found");
     }
 
     return apiSuccess({
