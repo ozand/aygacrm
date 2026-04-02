@@ -129,7 +129,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
     const { vault } = await getUserVault();
 
     const contactId = formData.get("contactId") as string;
-    const name = formData.get("label") as string;
+    const name = formData.get("name") as string;
     const description = formData.get("description") as string | null;
     const dueAtStr = formData.get("dueAt") as string | null;
 
@@ -173,7 +173,7 @@ export async function updateTask(
   try {
     const { vault } = await getUserVault();
 
-    const name = formData.get("label") as string;
+    const name = formData.get("name") as string;
     const description = formData.get("description") as string | null;
     const dueAtStr = formData.get("dueAt") as string | null;
 

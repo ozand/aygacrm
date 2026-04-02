@@ -9,15 +9,15 @@
 
 ## Identity model
 
-Contact is the canonical record. The schema will gain an `ExternalIdentity` model to map one contact to multiple source-specific identifiers across systems.
+Contact is the canonical record. The `ExternalIdentity` model maps one contact to multiple source-specific identifiers across systems (email, phone, LinkedIn URL, Telegram handle, etc.). Each identity has a `source`, `externalId`, `confidence` score, and optional `rawData` from the source.
 
 ## Provenance model
 
-The future provenance model will attach source attribution to individual field values and can include confidence scoring where useful. Provenance should answer both “where did this come from?” and “how sure are we?”
+The `ContactFieldProvenance` model tracks source attribution for individual field values on a contact. Each field change records which source wrote it, with what confidence, and who (user or agent) triggered the change. The `isActive` flag indicates the current "winning" value.
 
 ## Golden record concept
 
-A golden record is one canonical contact merged from multiple source records. It should keep the best current truth while still preserving source history and conflict detail.
+A golden record is one canonical contact merged from multiple source records. The `ContactMergeLog` model tracks merge/unmerge operations with full audit detail: which fields were taken from which contact, who approved the merge, and whether it was automatic or manual.
 
 ## Dedup / merge principles
 
@@ -27,7 +27,7 @@ A golden record is one canonical contact merged from multiple source records. It
 
 ## Current schema
 
-- 75 Prisma models
+- 78 Prisma models (75 core + 3 golden record: ExternalIdentity, ContactMergeLog, ContactFieldProvenance)
 - 2 enums
 - Central axis: `Account → User → Vault → Contact`
 

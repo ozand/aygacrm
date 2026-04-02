@@ -255,6 +255,10 @@ model Contact {
   tags               ContactTag[]
   moodEvents         MoodTrackingEvent[]
   photos             Photo[]
+  externalIdentities ExternalIdentity[]
+  mergesAsPrimary    ContactMergeLog[]       @relation("PrimaryMergeContact")
+  mergesAsSecondary  ContactMergeLog[]       @relation("SecondaryMergeContact")
+  fieldProvenance    ContactFieldProvenance[]
 
   @@index([vaultId, id])
   @@map("contacts")
@@ -1523,3 +1527,62 @@ model PostPhoto {
   @@map("post_photos")
 }
 
+// ============================================
+// GOLDEN RECORD & IDENTITY
+// ============================================
+
+model ExternalIdentity {
+  id         String   @id @default(uuid())
+  source     String   // linkedin, telegram, whatsapp, vk, facebook, email, phone, manual
+  externalId String   // the ID in the external system (email address, phone number, LinkedIn URL, Telegram handle, etc.)
+  label      String?  // optional human-readable label like "Work email", "Personal phone"
+  verified   Boolean  @default(false)
+  confidence Float    @default(1.0) // 0.0 to 1.0 confidence score
+  rawData    Json?    // optional raw data from the source
+  lastSyncAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([source, externalId])
+  @@index([contactId])
+  @@map("external_identities")
+}
+
+model ContactMergeLog {
+  id                 String   @id @default(uuid())
+  action             String   // merge, unmerge
+  primaryContactId   String   // the surviving/canonical contact
+  secondaryContactId String   // the contact that was merged in (or unmerged from)
+  mergedFields       Json?    // which fields were taken from the secondary
+  mergedBy           String?  // userId who performed or approved the merge
+  reason             String?  // auto, manual, agent
+  createdAt          DateTime @default(now())
+
+  primaryContact   Contact @relation("PrimaryMergeContact", fields: [primaryContactId], references: [id], onDelete: Cascade)
+  secondaryContact Contact @relation("SecondaryMergeContact", fields: [secondaryContactId], references: [id], onDelete: Cascade)
+
+  @@index([primaryContactId])
+  @@index([secondaryContactId])
+  @@map("contact_merge_logs")
+}
+
+model ContactFieldProvenance {
+  id         String   @id @default(uuid())
+  field      String   // the field name: firstName, lastName, email, phone, jobPosition, etc.
+  value      String?  // the field value as string
+  source     String   // manual, linkedin, telegram, email, agent, import, api
+  confidence Float    @default(1.0)
+  isActive   Boolean  @default(true) // whether this is the current "winning" value
+  setBy      String?  // userId or agentId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId, field])
+  @@map("contact_field_provenance")
+}

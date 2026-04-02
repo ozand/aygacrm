@@ -53,7 +53,7 @@ export function TaskForm({ contactId, existingTasks }: TaskFormProps) {
 
     const formData = new FormData();
     formData.set("contactId", contactId);
-    formData.set("label", label);
+    formData.set("name", label);
     formData.set("description", description);
     if (dueAt) {
       formData.set("dueAt", dueAt);

@@ -5,13 +5,22 @@
 
 ---
 
-## Current Priority: Agent Access Layer (EPIC-0003)
+## Current Priority: Golden Record Foundation (EPIC-0002)
+
+### In Progress
+- [ ] Server actions for ExternalIdentity CRUD (add/remove/list identities for a contact)
+- [ ] UI for managing external identities on contact detail page
+- [ ] Provenance tracking in contact create/update flows
 
 ### Next Up
-- [ ] CLI wrapper for common operations
-- [ ] Agent audit trail and permission scoping
+- [ ] Duplicate detection algorithm (match on email, phone, name similarity)
+- [ ] Merge queue UI and merge/unmerge server actions
+- [ ] CLI wrapper for common operations (EPIC-0003)
+- [ ] Agent audit trail and permission scoping (EPIC-0003)
 
 ### Done
+- [x] Added 3 Golden Record models: ExternalIdentity, ContactMergeLog, ContactFieldProvenance (78 tables total)
+- [x] Cleaned tech debt: deleted 10 legacy routes, fixed tasks label→name FormData key, removed dual lockfile
 - [x] Harden API v1 — Zod validation on all 20 POST/PUT endpoints, proper error separation (parse/validation/business/internal), INTERNAL_ERROR code added
 - [x] MCP route migrated to `app/src/app/api/mcp/route.ts` — proper auth via validateApiToken, 9 tools with Zod validation, no SDK dependency
 - [x] Ability naming normalized — `journal:*` → `journals:*` in 4 route files
@@ -52,10 +61,13 @@
 - [x] MCP route — moved to `app/src/app/api/mcp/route.ts` (done in EPIC-0003)
 
 ### EPIC-0002: Golden Record Foundation
-- [ ] Design identity resolution model (external IDs, source attribution)
-- [ ] Add provenance fields to Contact and related entities
+- [x] Add ExternalIdentity, ContactMergeLog, ContactFieldProvenance models to schema
+- [x] Prisma db push — 78 tables
+- [ ] Server actions for ExternalIdentity CRUD
+- [ ] Provenance tracking in contact create/update flows
 - [ ] Duplicate detection and merge queue
 - [ ] Canonical field selection rules
+- [ ] UI for external identities on contact detail page
 
 ### EPIC-0003: Agent Access Layer
 - [x] Harden API v1 — Zod schemas, proper error handling, ability normalization
@@ -74,11 +86,12 @@
 
 ## Tech Debt
 - [x] `app/api/mcp/route.ts` had `// @ts-nocheck` — replaced with properly typed route at `app/src/app/api/mcp/route.ts`
-- [ ] `formData.get("label")` in tasks.ts — FormData key should match Prisma field `name`
+- [x] `formData.get("label")` in tasks.ts — fixed to `formData.get("name")` to match Prisma field
+- [x] Legacy routes deleted: `app/api/monica/` (10 files)
+- [x] Dual lockfiles resolved: root `package-lock.json` removed
 - [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
-- [ ] Dual lockfiles: root `package-lock.json` vs `app/pnpm-lock.yaml`
-- [ ] Legacy routes still exist at `app/api/monica/v1/` and `app/api/upload/` (outside src tree)
+- [ ] Root `package.json` still has stale deps (sharp, vitest) — consider cleanup
 
 ---
 
@@ -86,7 +99,7 @@
 - App lives at `app/src/...`, alias `@/*` -> `./src/*`
 - Package manager: pnpm (in `app/`)
 - Stack: Next.js 16.1.6, React 19.2.3, Prisma 7.3.0, NextAuth 5 beta
-- 75 Prisma models, 2 enums
+- 78 Prisma models (75 core + 3 golden record), 2 enums
 - Detailed docs: `docs/product/`, `docs/architecture/`, `docs/backlog/`
 - Dev server: `pnpm dev --hostname 127.0.0.1 --port 4000` (port 3000 blocked by Windows EACCES)
 - Database: PostgreSQL 18.1 local, `monica` DB, 75 tables
