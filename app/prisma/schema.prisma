@@ -1,0 +1,1525 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+/// Account represents a billing/subscription entity
+/// Multiple users can belong to one account (team/family)
+model Account {
+  id             String   @id @default(uuid())
+  storageLimitMb Int      @default(50)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  vaults    Vault[]
+  auditLogs AuditLog[]
+  tags      Tag[]
+
+  @@map("accounts")
+}
+
+/// User represents an authenticated person
+model User {
+  id                     String    @id @default(uuid())
+  email                  String    @unique
+  emailVerifiedAt        DateTime?
+  password               String?
+  firstName              String?
+  lastName               String?
+  nameOrder              String    @default("%first_name% %last_name%")
+  dateFormat             String    @default("MMM DD, YYYY")
+  timezone               String?
+  numberFormat           String    @default("locale")
+  distanceFormat         String    @default("mi")
+  defaultMapSite         String    @default("openstreetmap")
+  locale                 String    @default("en")
+  isAccountAdministrator Boolean   @default(false)
+  helpShown              Boolean   @default(true)
+  invitationCode         String?
+  invitationAcceptedAt   DateTime?
+  rememberToken          String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  // Two-factor auth
+  twoFactorSecret        String?
+  twoFactorRecoveryCodes String?
+  twoFactorConfirmedAt   DateTime?
+
+  // Foreign keys
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Relations
+  sessions             Session[]
+  vaultAccess          UserVault[]
+  contactViews         ContactVaultUser[]
+  authoredNotes        Note[]
+  authoredActivities   Activity[]
+  notificationChannels UserNotificationChannel[]
+  webauthnKeys         WebauthnKey[]
+  userTokens           UserToken[]
+  apiTokens            ApiToken[]
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+/// Session for authentication
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  ipAddress    String?
+  userAgent    String?
+  payload      String
+  lastActivity DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ============================================
+// VAULT & ACCESS CONTROL
+// ============================================
+
+/// Vault is a container for contacts (like a folder/workspace)
+model Vault {
+  id                 String    @id @default(uuid())
+  name               String
+  description        String?
+  type               VaultType @default(PERSONAL)
+  defaultActivityTab String    @default("activity")
+  showGroupTab       Boolean   @default(true)
+  showTasksTab       Boolean   @default(true)
+  showFilesTab       Boolean   @default(true)
+  showJournalTab     Boolean   @default(true)
+  showCompaniesTab   Boolean   @default(true)
+  showReportsTab     Boolean   @default(true)
+  showCalendarTab    Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Foreign keys
+  accountId         String
+  defaultTemplateId String?
+
+  // Relations
+  account         Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  defaultTemplate Template?          @relation(fields: [defaultTemplateId], references: [id], onDelete: SetNull)
+  users           UserVault[]
+  contacts        Contact[]
+  contactViews    ContactVaultUser[]
+  notes           Note[]
+  groups          Group[]
+  companies       Company[]
+  labels          Label[]
+  journals        Journal[]
+  files               File[]
+  photos              Photo[]
+  activities      Activity[]
+  quickFacts      VaultQuickFact[]
+
+  @@map("vaults")
+}
+
+enum VaultType {
+  PERSONAL
+  SHARED
+  WORK
+}
+
+/// Junction table for User-Vault access with permissions
+model UserVault {
+  userId     String
+  vaultId    String
+  contactId  String // Each user has a "self" contact in the vault
+  permission VaultPermission
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vault   Vault   @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@id([userId, vaultId])
+  @@map("user_vault")
+}
+
+enum VaultPermission {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+/// Track user's interaction with contacts
+model ContactVaultUser {
+  contactId     String
+  vaultId       String
+  userId        String
+  numberOfViews Int      @default(0)
+  isFavorite    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  vault   Vault   @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, vaultId, userId])
+  @@map("contact_vault_user")
+}
+
+// ============================================
+// CONTACTS
+// ============================================
+
+/// Contact represents a person in the CRM
+model Contact {
+  id            String    @id @default(uuid())
+  firstName     String?
+  middleName    String?
+  lastName      String?
+  nickname      String?
+  maidenName    String?
+  prefix        String?
+  suffix        String?
+  jobPosition   String?
+  canBeDeleted  Boolean   @default(true)
+  listed        Boolean   @default(true)
+  lastUpdatedAt DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // External sync (CardDAV)
+  vcard       String?
+  distantUuid String?
+  distantEtag String?
+  distantUri  String?
+
+  // Foreign keys
+  vaultId    String
+  genderId   String?
+  pronounId  String?
+  templateId String?
+  companyId  String?
+  religionId String?
+
+  // Relations
+  vault    Vault     @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  gender   Gender?   @relation(fields: [genderId], references: [id], onDelete: SetNull)
+  pronoun  Pronoun?  @relation(fields: [pronounId], references: [id], onDelete: SetNull)
+  template Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  religion Religion? @relation(fields: [religionId], references: [id], onDelete: SetNull)
+
+  // Reverse relations
+  userVaultAccess    UserVault[]
+  userViews          ContactVaultUser[]
+  notes              Note[]
+  addresses          Address[]
+  contactInformation ContactInformation[]
+  importantDates     ContactImportantDate[]
+  reminders          ContactReminder[]
+  tasks              ContactTask[]
+  activities         Activity[]
+  feedItems          ContactFeedItem[]
+  relationships      Relationship[]         @relation("ContactRelationships")
+  relatedTo          Relationship[]         @relation("RelatedContact")
+  labels             ContactLabel[]
+  groups             ContactGroup[]
+  pets               Pet[]
+  goals              Goal[]
+  gifts              Gift[]
+  loans              Loan[]                 @relation("LoanerContact")
+  loanedTo           Loan[]                 @relation("LoaneeContact")
+  calls              Call[]
+  lifeEvents         LifeEvent[]
+  files              File[]
+  quickFacts         ContactQuickFact[]
+  auditLogs          AuditLog[]
+  tags               ContactTag[]
+  moodEvents         MoodTrackingEvent[]
+  photos             Photo[]
+
+  @@index([vaultId, id])
+  @@map("contacts")
+}
+
+/// Gender options for contacts
+model Gender {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  type      String   @default("other") // male, female, other
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts Contact[]
+
+  @@map("genders")
+}
+
+/// Pronoun options
+model Pronoun {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts Contact[]
+
+  @@map("pronouns")
+}
+
+/// Religion options
+model Religion {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts Contact[]
+
+  @@map("religions")
+}
+
+// ============================================
+// CONTACT INFORMATION
+// ============================================
+
+/// Types of contact information (email, phone, social media, etc.)
+model ContactInformationType {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  protocol  String? // mailto:, tel:, https://, etc.
+  type      String   @default("other") // email, phone, social, other
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactInformation ContactInformation[]
+
+  @@map("contact_information_types")
+}
+
+/// Actual contact information entries
+model ContactInformation {
+  id        String   @id @default(uuid())
+  data      String // The actual value (email, phone number, etc.)
+  label     String? // Custom label like "Work", "Home"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactId String
+  typeId    String
+
+  contact Contact                @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  type    ContactInformationType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+
+  @@map("contact_information")
+}
+
+/// Address types (home, work, etc.)
+model AddressType {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses Address[]
+
+  @@map("address_types")
+}
+
+/// Physical addresses
+model Address {
+  id         String   @id @default(uuid())
+  line1      String?
+  line2      String?
+  city       String?
+  province   String?
+  postalCode String?
+  country    String?
+  latitude   Float?
+  longitude  Float?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contactId     String
+  addressTypeId String?
+
+  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  addressType AddressType? @relation(fields: [addressTypeId], references: [id], onDelete: SetNull)
+
+  @@map("addresses")
+}
+
+// ============================================
+// DATES & REMINDERS
+// ============================================
+
+/// Types of important dates (birthday, anniversary, etc.)
+model ContactImportantDateType {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  type      String   @default("other") // birthday, anniversary, other
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  importantDates ContactImportantDate[]
+
+  @@map("contact_important_date_types")
+}
+
+/// Important dates for contacts
+model ContactImportantDate {
+  id        String   @id @default(uuid())
+  day       Int?
+  month     Int?
+  year      Int?
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactId String
+  typeId    String?
+
+  contact Contact                   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  type    ContactImportantDateType? @relation(fields: [typeId], references: [id], onDelete: SetNull)
+
+  reminders ContactReminder[]
+
+  @@map("contact_important_dates")
+}
+
+/// Reminders for contacts
+model ContactReminder {
+  id                 String   @id @default(uuid())
+  reminderChoice     String // 'day', 'week', 'month'
+  numberOfDaysBefore Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  contactImportantDateId String
+
+  importantDate ContactImportantDate @relation(fields: [contactImportantDateId], references: [id], onDelete: Cascade)
+  contact       Contact?             @relation(fields: [contactId], references: [id])
+  contactId     String?
+
+  @@map("contact_reminders")
+}
+
+// ============================================
+// NOTES & ACTIVITIES
+// ============================================
+
+/// Notes attached to contacts
+model Note {
+  id        Int      @id @default(autoincrement())
+  title     String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactId String
+  vaultId   String
+  authorId  String?
+  emotionId String?
+
+  contact Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  vault   Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  author  User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  emotion Emotion? @relation(fields: [emotionId], references: [id], onDelete: SetNull)
+
+  @@map("notes")
+}
+
+/// Emotions for tagging notes
+model Emotion {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  type      String // positive, negative, neutral
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes Note[]
+
+  @@map("emotions")
+}
+
+/// Activities/Interactions with contacts
+model Activity {
+  id          String    @id @default(uuid())
+  summary     String?
+  description String?
+  happenedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  contactId String
+  vaultId   String
+  authorId  String?
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  vault   Vault   @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@map("activities")
+}
+
+
+
+// ============================================
+// TASKS
+// ============================================
+
+/// Tasks related to contacts
+model ContactTask {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  dueAt       DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  contactId String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("contact_tasks")
+}
+
+// ============================================
+// QUICK FACTS
+// ============================================
+
+/// Quick facts about contacts (e.g., favorite food, hobbies)
+model ContactQuickFact {
+  id        String   @id @default(uuid())
+  label     String
+  value     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactId String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("contact_quick_facts")
+}
+
+// ============================================
+// RELATIONSHIPS
+// ============================================
+
+/// Type groups for relationships
+model RelationshipGroupType {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String // Family, Friends, Work, etc.
+  type      String? // love, family, friend, work
+  delible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  relationshipTypes RelationshipType[]
+
+  @@map("relationship_group_types")
+}
+
+/// Specific relationship types
+model RelationshipType {
+  id                      String  @id @default(uuid())
+  name                    String // spouse, partner, child, parent, etc.
+  nameReverseRelationship String?
+  canBeDeleted            Boolean @default(true)
+
+  groupTypeId String
+
+  groupType RelationshipGroupType @relation(fields: [groupTypeId], references: [id], onDelete: Cascade)
+
+  relationships Relationship[]
+
+  @@map("relationship_types")
+}
+
+/// Actual relationships between contacts
+model Relationship {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactId          String
+  relatedContactId   String
+  relationshipTypeId String
+
+  contact          Contact          @relation("ContactRelationships", fields: [contactId], references: [id], onDelete: Cascade)
+  relatedContact   Contact          @relation("RelatedContact", fields: [relatedContactId], references: [id], onDelete: Cascade)
+  relationshipType RelationshipType @relation(fields: [relationshipTypeId], references: [id], onDelete: Cascade)
+
+  @@map("relationships")
+}
+
+// ============================================
+// GROUPS & LABELS
+// ============================================
+
+/// Group types
+model GroupType {
+  id        String   @id @default(uuid())
+  accountId String
+  label     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles  GroupTypeRole[]
+  groups Group[]
+
+  @@map("group_types")
+}
+
+/// Roles within group types
+model GroupTypeRole {
+  id        String   @id @default(uuid())
+  label     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groupTypeId String
+
+  groupType     GroupType      @relation(fields: [groupTypeId], references: [id], onDelete: Cascade)
+  contactGroups ContactGroup[]
+
+  @@map("group_type_roles")
+}
+
+/// Groups (collections of contacts)
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vaultId     String
+  groupTypeId String?
+
+  vault     Vault      @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  groupType GroupType? @relation(fields: [groupTypeId], references: [id], onDelete: SetNull)
+
+  contacts ContactGroup[]
+
+  @@map("groups")
+}
+
+/// Junction table for contacts in groups
+model ContactGroup {
+  contactId String
+  groupId   String
+  roleId    String?
+  createdAt DateTime @default(now())
+
+  contact Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  group   Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role    GroupTypeRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@id([contactId, groupId])
+  @@map("contact_group")
+}
+
+/// Labels for tagging contacts
+model Label {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String
+  description String?
+  bgColor     String   @default("#e5e7eb")
+  textColor   String   @default("#1f2937")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vaultId String
+
+  vault    Vault          @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  contacts ContactLabel[]
+
+  @@map("labels")
+}
+
+/// Junction table for contact labels
+model ContactLabel {
+  contactId String
+  labelId   String
+  createdAt DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  label   Label   @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, labelId])
+  @@map("contact_label")
+}
+
+// ============================================
+// COMPANIES
+// ============================================
+
+/// Companies/Organizations
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  website   String?
+  type      String? // employer, client, partner, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vaultId String
+
+  vault    Vault     @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  contacts Contact[]
+
+  @@map("companies")
+}
+
+// ============================================
+// PETS
+// ============================================
+
+/// Pet categories
+model PetCategory {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pets Pet[]
+
+  @@map("pet_categories")
+}
+
+/// Pets belonging to contacts
+model Pet {
+  id        String   @id @default(uuid())
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contactId     String
+  petCategoryId String?
+
+  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  petCategory PetCategory? @relation(fields: [petCategoryId], references: [id], onDelete: SetNull)
+
+  @@map("pets")
+}
+
+// ============================================
+// CALLS
+// ============================================
+
+/// Call reason types
+model CallReasonType {
+  id        String   @id @default(uuid())
+  accountId String
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reasons CallReason[]
+
+  @@map("call_reason_types")
+}
+
+/// Specific call reasons
+model CallReason {
+  id        String   @id @default(uuid())
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reasonTypeId String
+
+  reasonType CallReasonType @relation(fields: [reasonTypeId], references: [id], onDelete: Cascade)
+  calls      Call[]
+
+  @@map("call_reasons")
+}
+
+/// Logged phone calls
+model Call {
+  id          String   @id @default(uuid())
+  contactId   String
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  calledAt    DateTime
+  duration    Int?     // minutes
+  description String?
+  callReasonId String?
+  callReason  CallReason? @relation(fields: [callReasonId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("calls")
+}
+
+// ============================================
+// GOALS & GIFTS & LOANS
+// ============================================
+
+/// Goals for contacts
+model Goal {
+  id           String   @id @default(uuid())
+  name         String
+  active       Boolean  @default(true)
+  streakCount  Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contactId String
+
+  contact      Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  streakEvents Streak[]
+
+  @@map("goals")
+}
+
+/// Gifts for contacts
+model Gift {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  amount      Decimal?  @db.Decimal(15, 2)
+  currency    String?
+  url         String?
+  status      String    @default("idea") // idea, planned, given, received
+  date        DateTime?
+  occasionId  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  contactId String
+
+  contact  Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  occasion GiftOccasion? @relation(fields: [occasionId], references: [id], onDelete: SetNull)
+
+  @@map("gifts")
+}
+
+/// Gift occasions
+model GiftOccasion {
+  id        String   @id @default(uuid())
+  accountId String
+  label     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  gifts Gift[]
+
+  @@map("gift_occasions")
+}
+
+/// Loans between contacts
+model Loan {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  amount      Decimal   @db.Decimal(15, 2)
+  currency    String
+  type        String // lent, borrowed
+  loanedAt    DateTime?
+  settledAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  loanerId String
+  loaneeId String
+
+  loaner Contact @relation("LoanerContact", fields: [loanerId], references: [id], onDelete: Cascade)
+  loanee Contact @relation("LoaneeContact", fields: [loaneeId], references: [id], onDelete: Cascade)
+
+  @@map("loans")
+}
+
+// ============================================
+// LIFE EVENTS
+// ============================================
+
+/// Life event categories
+model LifeEventCategory {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  types LifeEventType[]
+
+  @@map("life_event_categories")
+}
+
+/// Life event types
+model LifeEventType {
+  id        String   @id @default(uuid())
+  label     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId String
+
+  category   LifeEventCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  lifeEvents LifeEvent[]
+
+  @@map("life_event_types")
+}
+
+/// Actual life events
+model LifeEvent {
+  id           String   @id @default(uuid())
+  summary      String?
+  description  String?
+  happenedAt   DateTime
+  costs        Decimal? @db.Decimal(15, 2)
+  currency     String?
+  duration     Int?
+  distance     Int?
+  distanceUnit String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contactId       String
+  lifeEventTypeId String?
+
+  contact       Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  lifeEventType LifeEventType? @relation(fields: [lifeEventTypeId], references: [id], onDelete: SetNull)
+
+  @@map("life_events")
+}
+
+// ============================================
+// JOURNAL
+// ============================================
+
+/// Journals within vaults
+model Journal {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vaultId String
+
+  vault  Vault         @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  posts  Post[]
+  slices SliceOfLife[]
+  entries JournalEntry[] // Corrected: Use 'entries' instead of 'journalEntries' to match MIGRATION_PLAN.md
+
+  @@map("journals")
+}
+
+/// Journal entries
+model JournalEntry {
+  id         String   @id @default(uuid())
+  journalId  String
+  journal    Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  date       DateTime
+  title      String?
+  content    String?  // Markdown
+  mood       Int?     // 1-5
+  weather    String?
+  photos     Photo[]  // Relation to Photo model
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  postId Int?
+  post   Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  
+  @@map("journal_entries")
+}
+
+/// Journal posts
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String?
+  content     String?
+  writtenAt   DateTime  @default(now())
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  journalId     String
+  sliceOfLifeId String?
+
+  journal     Journal       @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  sliceOfLife SliceOfLife?  @relation(fields: [sliceOfLifeId], references: [id], onDelete: SetNull)
+  sections    PostSection[]
+  metrics     PostMetric[]
+  tags        PostTagAssignment[]
+  photos      PostPhoto[]
+  journalEntries JournalEntry[] // Add this line
+
+  @@map("posts")
+}
+
+/// Post sections
+model PostSection {
+  id        Int      @id @default(autoincrement())
+  label     String?
+  content   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId Int
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_sections")
+}
+
+/// Post metrics for tracking
+model PostMetric {
+  id        Int      @id @default(autoincrement())
+  value     Decimal  @db.Decimal(15, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId          Int
+  journalMetricId String
+
+  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  journalMetric JournalMetric @relation(fields: [journalMetricId], references: [id], onDelete: Cascade)
+
+  @@map("post_metrics")
+}
+
+/// Journal metrics (things to track)
+model JournalMetric {
+  id        String   @id @default(uuid())
+  accountId String
+  label     String
+  unit      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postMetrics PostMetric[]
+
+  @@map("journal_metrics")
+}
+
+/// Slices of life (themed periods)
+model SliceOfLife {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  journalId String
+
+  journal Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  posts   Post[]
+
+  @@map("slices_of_life")
+}
+
+// ============================================
+// FILES
+// ============================================
+
+/// Uploaded files
+model File {
+  id          String   @id @default(uuid())
+  uuid        String   @unique
+  name        String
+  originalUrl String
+  mimeType    String?
+  size        Int? // in bytes
+  type        String   @default("document") // document, photo, avatar
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vaultId   String
+  contactId String?
+
+  vault   Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  photos  Photo[]
+
+  @@map("files")
+}
+
+/// Photos linked to contacts or journal entries
+model Photo {
+  id          String    @id @default(uuid())
+  fileId      String    @unique // Link to the actual File entry
+  file        File      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  description String?
+  isAvatar    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  vaultId      String?
+  vault        Vault?    @relation(fields: [vaultId], references: [id], onDelete: SetNull)
+  // Optional relations
+  contactId    String?
+  contact      Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  journalEntryId String?
+  journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  @@map("photos")
+}
+
+// ============================================
+// TEMPLATES
+// ============================================
+
+/// Contact page templates
+model Template {
+  id           String   @id @default(uuid())
+  accountId    String
+  name         String
+  canBeDeleted Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  vaults   Vault[]
+  contacts Contact[]
+  pages    TemplatePage[]
+
+  @@map("templates")
+}
+
+/// Pages within templates
+model TemplatePage {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String
+  position     Int      @default(0)
+  canBeDeleted Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  templateId String
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  modules  Module[]
+
+  @@map("template_pages")
+}
+
+/// Modules within template pages
+model Module {
+  id           String   @id @default(uuid())
+  type         String // notes, activities, reminders, etc.
+  canBeDeleted Boolean  @default(true)
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  templatePageId String
+
+  templatePage TemplatePage @relation(fields: [templatePageId], references: [id], onDelete: Cascade)
+  rows         ModuleRow[]
+
+  @@map("modules")
+}
+
+/// Rows within modules
+model ModuleRow {
+  id        String   @id @default(uuid())
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  moduleId String
+
+  module Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  fields ModuleRowField[]
+
+  @@map("module_rows")
+}
+
+/// Fields within module rows
+model ModuleRowField {
+  id        String   @id @default(uuid())
+  type      String // text, date, select, etc.
+  label     String
+  required  Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  moduleRowId String
+
+  moduleRow ModuleRow @relation(fields: [moduleRowId], references: [id], onDelete: Cascade)
+
+  @@map("module_row_fields")
+}
+
+// ============================================
+// VAULT QUICK FACTS
+// ============================================
+
+model VaultQuickFact {
+  id        String   @id @default(uuid())
+  label     String
+  value     String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vaultId String
+
+  vault Vault @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  @@map("vault_quick_facts")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+/// User notification channels (email, telegram, etc.)
+model UserNotificationChannel {
+  id             String    @id @default(uuid())
+  type           String // email, telegram
+  label          String
+  content        String // email address or telegram chat id
+  active         Boolean   @default(true)
+  verified       Boolean   @default(false)
+  verifiedAt     DateTime?
+  failedAttempts Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  userId String
+
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications UserNotificationSent[]
+
+  @@map("user_notification_channels")
+}
+
+/// Sent notifications tracking
+model UserNotificationSent {
+  id        String   @id @default(uuid())
+  subject   String?
+  body      String?
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  channelId String
+
+  channel UserNotificationChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@map("user_notification_sent")
+}
+
+// ============================================
+// SECURITY
+// ============================================
+
+/// WebAuthn keys for passwordless auth
+model WebauthnKey {
+  id              String    @id @default(uuid())
+  name            String
+  credentialId    String    @unique
+  publicKey       String
+  signCount       Int       @default(0)
+  userHandle      String?
+  transports      String[]
+  attestationType String?
+  aaguid          String?
+  usedAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("webauthn_keys")
+}
+
+/// OAuth tokens for social login
+model UserToken {
+  id           String    @id @default(uuid())
+  driver       String // google, github, facebook, etc.
+  driverId     String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([driver, driverId])
+  @@map("user_tokens")
+}
+
+// ============================================
+// CURRENCIES
+// ============================================
+
+model Currency {
+  id   String @id @default(uuid())
+  code String @unique // USD, EUR, etc.
+  name String
+
+  @@map("currencies")
+}
+
+// ============================================
+// API TOKENS
+// ============================================
+
+/// API tokens for REST API authentication (Bearer tokens)
+model ApiToken {
+  id          String    @id @default(uuid())
+  name        String // User-friendly name for the token
+  token       String    @unique // The actual token (hashed)
+  tokenPrefix String // First 8 chars for display
+  abilities   String[] // Permissions: read, write, delete, etc.
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_tokens")
+}
+
+// ============================================
+// AUDIT LOGS
+// ============================================
+
+/// Audit logs for tracking user actions
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String // contact_created, note_updated, etc.
+  objects   Json // JSON with relevant IDs and names
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Who performed the action
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Which account
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Optionally linked to a specific contact
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([accountId, createdAt])
+  @@index([contactId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// TAGS
+// ============================================
+
+/// Tags for organizing contacts
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  contacts ContactTag[]
+
+  @@unique([accountId, slug])
+  @@map("tags")
+}
+
+/// Junction table for contact-tag relationship
+model ContactTag {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, tagId])
+  @@map("contact_tags")
+}
+
+// ============================================
+// MOOD TRACKING
+// ============================================
+
+/// Mood tracking parameters (configurable mood levels)
+model MoodTrackingParameter {
+  id        String   @id @default(uuid())
+  label     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accountId String
+
+  moodEvents MoodTrackingEvent[]
+
+  @@map("mood_tracking_parameters")
+}
+
+/// Mood tracking events for contacts
+model MoodTrackingEvent {
+  id                  String   @id @default(uuid())
+  ratedAt             DateTime @default(now())
+  note                String?
+  numberOfHoursSlept  Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  contactId   String
+  parameterId String?
+
+  contact   Contact                @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  parameter MoodTrackingParameter? @relation(fields: [parameterId], references: [id], onDelete: SetNull)
+
+  @@map("mood_tracking_events")
+}
+
+// ============================================
+// GOAL STREAKS
+// ============================================
+
+/// Streak entries for goals
+model Streak {
+  id           String   @id @default(uuid())
+  happenedAt   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  goalId String
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+// ============================================
+// CONTACT FEED
+// ============================================
+
+/// Feed items for contact timeline
+model ContactFeedItem {
+  id         String   @id @default(uuid())
+  action     String   // created, updated, deleted, etc.
+  feedableId String   // ID of the related entity
+  feedableType String // Type of entity (note, activity, call, etc.)
+  createdAt  DateTime @default(now())
+
+  contactId String
+  authorId  String?
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId, createdAt])
+  @@map("contact_feed_items")
+}
+
+// ============================================
+// POST TAGS (Journal)
+// ============================================
+
+/// Tags for journal posts
+model PostTag {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vaultId String
+
+  posts PostTagAssignment[]
+
+  @@unique([vaultId, slug])
+  @@map("post_tags")
+}
+
+/// Junction table for post-tag relationship
+model PostTagAssignment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  postId Int
+  tagId  String
+
+  post Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  PostTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("post_tag_assignments")
+}
+
+// ============================================
+// POST PHOTOS (Journal)
+// ============================================
+
+/// Photos attached to journal posts
+model PostPhoto {
+  id        String   @id @default(uuid())
+  filePath  String
+  fileName  String?
+  caption   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId Int
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_photos")
+}
+
