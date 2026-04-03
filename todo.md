@@ -5,13 +5,19 @@
 
 ---
 
-## Current Priority: Product UX & API Completeness
+## Current Priority: Test Coverage & Quality
 
 ### Next Up
-- [ ] No test coverage for most features
 - [ ] No CI/CD pipeline
+- [ ] Add integration tests for API v1 routes (with DB mocking)
+- [ ] Add more unit tests for server actions
 
 ### Done
+- [x] Vitest 4.1.2 set up with native tsconfig paths, `pnpm test` / `pnpm test:watch` scripts
+- [x] 52 unit tests across 3 test suites — all passing
+- [x] Tests: ingestion-conventions.ts — source/kind validation, metadata schemas, create/update schemas
+- [x] Tests: canonical-fields.ts — selectCanonicalValue priority rules, tie-breaking, manual override
+- [x] Tests: duplicates.ts — normalizeEmail/Phone, name similarity scoring, evaluatePair threshold logic
 - [x] PUT /api/v1/records/:id — update external records with validation, metadata check, audit logging
 - [x] Dashboard activity feed — recent notes, tasks, external records across all contacts
 - [x] Unified activity timeline on contact detail — merges feed items + external records, sorted by date
@@ -126,9 +132,8 @@
 - [x] Legacy routes deleted: `app/api/monica/` (10 files)
 - [x] Dual lockfiles resolved: root `package-lock.json` removed
 - [x] Root `package.json` cleaned — stale deps removed, node_modules deleted
-- [ ] No test coverage for most features
-- [ ] No CI/CD pipeline
 - [x] Root vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, scripts/, utils/, storage.sqlite3 — all deleted
+- [x] Test infrastructure added — Vitest 4.1.2, 52 tests, 3 suites (ingestion-conventions, canonical-fields, duplicates)
 
 ---
 
