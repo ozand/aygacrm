@@ -26,6 +26,24 @@ export interface ActionResult {
   data?: unknown;
 }
 
+export interface ContactListOptions {
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: "name" | "updated" | "created";
+  sortOrder?: "asc" | "desc";
+  labelId?: string;
+  groupId?: string;
+}
+
+export interface ContactListResult {
+  contacts: Awaited<ReturnType<typeof db.contact.findMany>>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 // Helper to get current user's vault
 async function getUserVault() {
   const session = await auth();
@@ -45,32 +63,55 @@ async function getUserVault() {
   return { userId: session.user.id, vault: userVault.vault };
 }
 
-// Get all contacts for current user's vault with optional search
-export async function getContacts(searchQuery?: string) {
+// Get all contacts for current user's vault with filters, sorting, and pagination
+export async function getContacts(
+  options: ContactListOptions = {}
+): Promise<ContactListResult> {
   try {
     const { vault } = await getUserVault();
 
+    const {
+      search,
+      page = 1,
+      pageSize = 24,
+      sortBy = "name",
+      sortOrder = "asc",
+      labelId,
+      groupId,
+    } = options;
+
     // Base where clause
-    const baseWhere = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseWhere: any = {
       vaultId: vault.id,
       deletedAt: null,
       listed: true,
       canBeDeleted: true, // Exclude user's "self" contact
     };
 
-    // Add search conditions if query provided
-    const where = searchQuery
+    // Add label filter
+    if (labelId) {
+      baseWhere.labels = { some: { labelId } };
+    }
+
+    // Add group filter
+    if (groupId) {
+      baseWhere.groupContacts = { some: { groupId } };
+    }
+
+    // Add search conditions
+    const where = search
       ? {
           ...baseWhere,
           OR: [
-            { firstName: { contains: searchQuery, mode: "insensitive" as const } },
-            { lastName: { contains: searchQuery, mode: "insensitive" as const } },
-            { nickname: { contains: searchQuery, mode: "insensitive" as const } },
-            { jobPosition: { contains: searchQuery, mode: "insensitive" as const } },
+            { firstName: { contains: search, mode: "insensitive" as const } },
+            { lastName: { contains: search, mode: "insensitive" as const } },
+            { nickname: { contains: search, mode: "insensitive" as const } },
+            { jobPosition: { contains: search, mode: "insensitive" as const } },
             {
               contactInformation: {
                 some: {
-                  data: { contains: searchQuery, mode: "insensitive" as const },
+                  data: { contains: search, mode: "insensitive" as const },
                 },
               },
             },
@@ -78,29 +119,77 @@ export async function getContacts(searchQuery?: string) {
         }
       : baseWhere;
 
-    const contacts = await db.contact.findMany({
-      where,
-      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
-      include: {
-        contactInformation: {
-          include: { type: true },
-        },
-        labels: {
-          include: { label: true },
-        },
-      },
-    });
+    // Build orderBy
+    const orderBy =
+      sortBy === "updated"
+        ? [{ lastUpdatedAt: sortOrder }]
+        : sortBy === "created"
+          ? [{ createdAt: sortOrder }]
+          : [{ firstName: sortOrder }, { lastName: sortOrder }];
 
-    return contacts;
+    // Get total count and paginated results in parallel
+    const [total, contacts] = await Promise.all([
+      db.contact.count({ where }),
+      db.contact.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          contactInformation: {
+            include: { type: true },
+          },
+          labels: {
+            include: { label: true },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      contacts,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   } catch (error) {
     console.error("Error fetching contacts:", error);
-    return [];
+    return { contacts: [], total: 0, page: 1, pageSize: 24, totalPages: 0 };
   }
 }
 
 // Search contacts (wrapper for client components)
 export async function searchContacts(query: string) {
-  return getContacts(query);
+  return getContacts({ search: query });
+}
+
+// Get all labels for filtering
+export async function getLabels() {
+  try {
+    const { vault } = await getUserVault();
+    return await db.label.findMany({
+      where: { vaultId: vault.id },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { contacts: true } } },
+    });
+  } catch {
+    return [];
+  }
+}
+
+// Get all groups for filtering
+export async function getGroups() {
+  try {
+    const { vault } = await getUserVault();
+    return await db.group.findMany({
+      where: { vaultId: vault.id },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { contacts: true } } },
+    });
+  } catch {
+    return [];
+  }
 }
 
 // Get single contact by ID

@@ -23,7 +23,7 @@ async function getUserVault() {
 }
 
 export interface SearchResult {
-  type: "contact" | "note" | "task" | "activity" | "group" | "label" | "postTag" | "postPhoto";
+  type: "contact" | "note" | "task" | "activity" | "group" | "label" | "postTag" | "postPhoto" | "externalRecord";
   id: string;
   title: string;
   subtitle?: string;
@@ -232,6 +232,41 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       title: label.name,
       subtitle: `${label._count.contacts} contacts`,
       url: `/labels/${label.id}`,
+    });
+  }
+
+  // Search external records
+  const externalRecords = await db.externalRecord.findMany({
+    where: {
+      contact: {
+        vaultId: vault.id,
+        deletedAt: null,
+      },
+      OR: [
+        { title: { contains: searchTerm, mode: "insensitive" } },
+        { content: { contains: searchTerm, mode: "insensitive" } },
+      ],
+    },
+    include: {
+      contact: {
+        select: { id: true, firstName: true, lastName: true },
+      },
+    },
+    take: 10,
+  });
+
+  for (const record of externalRecords) {
+    const contactName =
+      [record.contact.firstName, record.contact.lastName].filter(Boolean).join(" ") ||
+      "Unknown";
+
+    results.push({
+      type: "externalRecord",
+      id: record.id,
+      title: record.title || record.content?.substring(0, 50) || `${record.source} ${record.kind}`,
+      subtitle: `${record.source} ${record.kind} — ${contactName}`,
+      url: `/contacts/${record.contact.id}`,
+      matchedField: record.content?.toLowerCase().includes(searchTerm) ? "content" : "title",
     });
   }
 

@@ -5,7 +5,7 @@
 
 ---
 
-## Current Priority: Test Coverage & Quality
+## Current Priority: Product UX & Search
 
 ### Next Up
 - [ ] No CI/CD pipeline
@@ -13,6 +13,13 @@
 - [ ] Add more unit tests for server actions
 
 ### Done
+- [x] Global search command palette (Ctrl+K) — searches contacts, notes, tasks, activities, groups, labels, external records
+- [x] Global search wired into sidebar with trigger button
+- [x] External records added to globalSearch() results
+- [x] Contacts list pagination (24 per page, page controls, URL-driven)
+- [x] Contacts list sorting (by name, updated, created — asc/desc)
+- [x] Contacts list filtering by label and group
+- [x] getLabels() and getGroups() server actions for filter options
 - [x] Vitest 4.1.2 set up with native tsconfig paths, `pnpm test` / `pnpm test:watch` scripts
 - [x] 52 unit tests across 3 test suites — all passing
 - [x] Tests: ingestion-conventions.ts — source/kind validation, metadata schemas, create/update schemas

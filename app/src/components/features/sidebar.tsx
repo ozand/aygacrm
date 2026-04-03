@@ -14,6 +14,7 @@ import {
   Tags,
   FolderOpen,
 } from "lucide-react";
+import { GlobalSearch } from "@/components/features/global-search";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -39,6 +40,9 @@ export function Sidebar() {
             <Link href="/dashboard" className="text-2xl font-bold text-primary">
               Monica
             </Link>
+          </div>
+          <div className="mb-4">
+            <GlobalSearch />
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
