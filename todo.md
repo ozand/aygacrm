@@ -9,15 +9,17 @@
 
 ### Next Up
 - [ ] Add E2E tests with Playwright (contact creation, search, navigation)
-- [ ] Expand unit test coverage (merge, provenance, external identities)
 - [ ] Reminder notification delivery (email/Telegram — currently stubbed)
 
 ### Done
+- [x] Unit tests for merge.ts — mergeContacts (field transfer, relation transfer, label/group/tag dedup, soft-delete, merge log), unmergeContacts, getMergeHistory
+- [x] Unit tests for provenance.ts — recordProvenance (deactivate+create, multi-field, setBy), getProvenanceForContact, getProvenanceHistory
+- [x] Unit tests for external-identities.ts — CRUD operations, vault scoping, P2002 duplicate handling, findContactsByExternalId
+- [x] 116 tests across 9 suites — all passing
+- [x] Vitest config updated: `pool: "forks"` to fix Node v24 hanging issue
 - [x] Contact form completeness — maiden name, gender, pronouns, company, religion fields with dropdown selects
 - [x] Server actions updated — createContact/updateContact accept genderId, pronounId, companyId, religionId
 - [x] Create/edit pages fetch option lists (genders, pronouns, companies, religions) in parallel via Promise.all
-
-### Done
 - [x] GitHub Actions CI workflow (`.github/workflows/ci.yml`) — PostgreSQL service, tsc check, vitest, next build
 - [x] API records validation tests (`api-records-validation.test.ts`) — createExternalRecordSchema, updateExternalRecordSchema, per-source metadata validation
 - [x] Dashboard tests (`dashboard.test.ts`) — getDashboardStats shape/zeros, getRecentActivity merge/sort/limit
@@ -150,7 +152,7 @@
 - [x] Dual lockfiles resolved: root `package-lock.json` removed
 - [x] Root `package.json` cleaned — stale deps removed, node_modules deleted
 - [x] Root vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, scripts/, utils/, storage.sqlite3 — all deleted
-- [x] Test infrastructure added — Vitest 4.1.2, 69 tests, 6 suites (ingestion-conventions, canonical-fields, duplicates, api-records-validation, dashboard, search)
+- [x] Test infrastructure added — Vitest 4.1.2, 116 tests, 9 suites (ingestion-conventions, canonical-fields, duplicates, api-records-validation, dashboard, search, merge, provenance, external-identities)
 - [x] CI/CD pipeline — GitHub Actions workflow with PostgreSQL, tsc, tests, build
 
 ---
