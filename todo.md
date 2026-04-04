@@ -5,14 +5,20 @@
 
 ---
 
-## Current Priority: Product UX & Search
+## Current Priority: CI/CD & Test Coverage
 
 ### Next Up
-- [ ] No CI/CD pipeline
-- [ ] Add integration tests for API v1 routes (with DB mocking)
-- [ ] Add more unit tests for server actions
+- [ ] Add E2E tests with Playwright (contact creation, search, navigation)
+- [ ] Expand unit test coverage (merge, provenance, external identities)
+- [ ] Product polish: contact form completeness (maiden name, gender, pronouns, company)
+- [ ] Reminder notification delivery (email/Telegram — currently stubbed)
 
 ### Done
+- [x] GitHub Actions CI workflow (`.github/workflows/ci.yml`) — PostgreSQL service, tsc check, vitest, next build
+- [x] API records validation tests (`api-records-validation.test.ts`) — createExternalRecordSchema, updateExternalRecordSchema, per-source metadata validation
+- [x] Dashboard tests (`dashboard.test.ts`) — getDashboardStats shape/zeros, getRecentActivity merge/sort/limit
+- [x] Search tests (`search.test.ts`) — globalSearch empty/short queries, type-tagged results, external records search, auth failure
+- [x] 69 tests across 6 suites — all passing
 - [x] Global search command palette (Ctrl+K) — searches contacts, notes, tasks, activities, groups, labels, external records
 - [x] Global search wired into sidebar with trigger button
 - [x] External records added to globalSearch() results
@@ -140,7 +146,8 @@
 - [x] Dual lockfiles resolved: root `package-lock.json` removed
 - [x] Root `package.json` cleaned — stale deps removed, node_modules deleted
 - [x] Root vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, scripts/, utils/, storage.sqlite3 — all deleted
-- [x] Test infrastructure added — Vitest 4.1.2, 52 tests, 3 suites (ingestion-conventions, canonical-fields, duplicates)
+- [x] Test infrastructure added — Vitest 4.1.2, 69 tests, 6 suites (ingestion-conventions, canonical-fields, duplicates, api-records-validation, dashboard, search)
+- [x] CI/CD pipeline — GitHub Actions workflow with PostgreSQL, tsc, tests, build
 
 ---
 
