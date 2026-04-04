@@ -17,18 +17,34 @@ interface ContactFormProps {
     lastName?: string | null;
     middleName?: string | null;
     nickname?: string | null;
+    maidenName?: string | null;
     prefix?: string | null;
     suffix?: string | null;
     jobPosition?: string | null;
+    genderId?: string | null;
+    pronounId?: string | null;
+    companyId?: string | null;
+    religionId?: string | null;
     contactInformation?: Array<{
       data: string;
       type: { type: string };
     }>;
   };
   mode: "create" | "edit";
+  genders?: Array<{ id: string; name: string }>;
+  pronouns?: Array<{ id: string; name: string }>;
+  companies?: Array<{ id: string; name: string }>;
+  religions?: Array<{ id: string; name: string }>;
 }
 
-export function ContactForm({ contact, mode }: ContactFormProps) {
+export function ContactForm({
+  contact,
+  mode,
+  genders = [],
+  pronouns = [],
+  companies = [],
+  religions = [],
+}: ContactFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +167,16 @@ export function ContactForm({ contact, mode }: ContactFormProps) {
                   defaultValue={contact?.nickname || ""}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maidenName">Maiden Name</Label>
+                <Input
+                  id="maidenName"
+                  name="maidenName"
+                  placeholder="Previous last name"
+                  defaultValue={contact?.maidenName || ""}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -190,6 +216,83 @@ export function ContactForm({ contact, mode }: ContactFormProps) {
                   placeholder="Software Engineer"
                   defaultValue={contact?.jobPosition || ""}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Personal Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="genderId">Gender</Label>
+                  <select
+                    id="genderId"
+                    name="genderId"
+                    defaultValue={contact?.genderId || ""}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Not specified</option>
+                    {genders.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pronounId">Pronouns</Label>
+                  <select
+                    id="pronounId"
+                    name="pronounId"
+                    defaultValue={contact?.pronounId || ""}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Not specified</option>
+                    {pronouns.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyId">Company</Label>
+                <select
+                  id="companyId"
+                  name="companyId"
+                  defaultValue={contact?.companyId || ""}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">No company</option>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="religionId">Religion</Label>
+                <select
+                  id="religionId"
+                  name="religionId"
+                  defaultValue={contact?.religionId || ""}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Not specified</option>
+                  {religions.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </CardContent>
           </Card>

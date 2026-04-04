@@ -5,13 +5,17 @@
 
 ---
 
-## Current Priority: CI/CD & Test Coverage
+## Current Priority: Product Polish & Quality
 
 ### Next Up
 - [ ] Add E2E tests with Playwright (contact creation, search, navigation)
 - [ ] Expand unit test coverage (merge, provenance, external identities)
-- [ ] Product polish: contact form completeness (maiden name, gender, pronouns, company)
 - [ ] Reminder notification delivery (email/Telegram — currently stubbed)
+
+### Done
+- [x] Contact form completeness — maiden name, gender, pronouns, company, religion fields with dropdown selects
+- [x] Server actions updated — createContact/updateContact accept genderId, pronounId, companyId, religionId
+- [x] Create/edit pages fetch option lists (genders, pronouns, companies, religions) in parallel via Promise.all
 
 ### Done
 - [x] GitHub Actions CI workflow (`.github/workflows/ci.yml`) — PostgreSQL service, tsc check, vitest, next build

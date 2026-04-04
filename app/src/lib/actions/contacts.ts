@@ -249,6 +249,10 @@ export async function createContact(formData: FormData): Promise<ActionResult> {
     const jobPosition = formData.get("jobPosition") as string;
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
+    const genderId = formData.get("genderId") as string;
+    const pronounId = formData.get("pronounId") as string;
+    const companyId = formData.get("companyId") as string;
+    const religionId = formData.get("religionId") as string;
 
     // Validate - at least first or last name required
     if (!firstName && !lastName && !nickname) {
@@ -272,6 +276,10 @@ export async function createContact(formData: FormData): Promise<ActionResult> {
         vaultId: vault.id,
         listed: true,
         canBeDeleted: true,
+        genderId: genderId || null,
+        pronounId: pronounId || null,
+        companyId: companyId || null,
+        religionId: religionId || null,
       },
     });
 
@@ -390,6 +398,10 @@ export async function updateContact(
     const prefix = formData.get("prefix") as string;
     const suffix = formData.get("suffix") as string;
     const jobPosition = formData.get("jobPosition") as string;
+    const genderId = formData.get("genderId") as string;
+    const pronounId = formData.get("pronounId") as string;
+    const companyId = formData.get("companyId") as string;
+    const religionId = formData.get("religionId") as string;
 
     const updatedFields = {
       firstName: firstName || null,
@@ -400,6 +412,10 @@ export async function updateContact(
       prefix: prefix || null,
       suffix: suffix || null,
       jobPosition: jobPosition || null,
+      genderId: genderId || null,
+      pronounId: pronounId || null,
+      companyId: companyId || null,
+      religionId: religionId || null,
     };
 
     const changedFields = Object.fromEntries(

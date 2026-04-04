@@ -1,5 +1,25 @@
-import { ContactForm } from "@/components/features/contact-form";
+export const dynamic = 'force-dynamic';
 
-export default function NewContactPage() {
-  return <ContactForm mode="create" />;
+import { ContactForm } from "@/components/features/contact-form";
+import { getGenders, getPronouns } from "@/lib/actions/gender-pronoun";
+import { getCompanies } from "@/lib/actions/companies";
+import { getReligions } from "@/lib/actions/religion";
+
+export default async function NewContactPage() {
+  const [genders, pronouns, companies, religions] = await Promise.all([
+    getGenders(),
+    getPronouns(),
+    getCompanies(),
+    getReligions(),
+  ]);
+
+  return (
+    <ContactForm
+      mode="create"
+      genders={genders}
+      pronouns={pronouns}
+      companies={companies}
+      religions={religions}
+    />
+  );
 }
