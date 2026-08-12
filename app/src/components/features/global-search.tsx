@@ -58,8 +58,15 @@ export function GlobalSearch() {
         setOpen((prev) => !prev);
       }
     }
+    function handleOpen() {
+      setOpen(true);
+    }
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("open-global-search", handleOpen);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("open-global-search", handleOpen);
+    };
   }, []);
 
   // Search on query change
