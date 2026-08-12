@@ -158,6 +158,7 @@ export async function createImportantDate(
     const month = formData.get("month") as string;
     const year = formData.get("year") as string;
     const typeId = formData.get("typeId") as string;
+    const dateType = formData.get("dateType") as string;
 
     if (!contactId) {
       return { success: false, error: "Contact ID is required" };
@@ -176,6 +177,23 @@ export async function createImportantDate(
       return { success: false, error: "Contact not found" };
     }
 
+    let resolvedTypeId: string | null = typeId || null;
+    if (!resolvedTypeId && ["birthday", "anniversary", "other"].includes(dateType)) {
+      let typeRow = await db.contactImportantDateType.findFirst({
+        where: { accountId: vault.accountId, type: dateType },
+      });
+      if (!typeRow) {
+        typeRow = await db.contactImportantDateType.create({
+          data: {
+            accountId: vault.accountId,
+            name: dateType.charAt(0).toUpperCase() + dateType.slice(1),
+            type: dateType,
+          },
+        });
+      }
+      resolvedTypeId = typeRow.id;
+    }
+
     const importantDate = await db.contactImportantDate.create({
       data: {
         contactId,
@@ -183,7 +201,7 @@ export async function createImportantDate(
         month: parseInt(month),
         year: year ? parseInt(year) : null,
         label: label || null,
-        typeId: typeId || null,
+        typeId: resolvedTypeId,
       },
     });
 

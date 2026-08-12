@@ -77,6 +77,21 @@ export function ImportantDateForm({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="dateType">Type</Label>
+        <select
+          id="dateType"
+          name="dateType"
+          defaultValue="birthday"
+          disabled={isPending}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="birthday">Birthday</option>
+          <option value="anniversary">Anniversary</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="label">Label</Label>
         <Input
           id="label"

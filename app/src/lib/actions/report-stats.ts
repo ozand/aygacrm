@@ -38,6 +38,20 @@ function displayName(firstName: string | null, lastName: string | null) {
   return [firstName, lastName].filter(Boolean).join(" ") || "Unnamed";
 }
 
+function classifyDate(item: {
+  type: { type: string | null } | null;
+  label: string | null;
+}): "birthday" | "anniversary" | "other" {
+  const rawType = item.type?.type?.toLowerCase();
+  if (rawType === "birthday" || rawType === "anniversary") return rawType;
+  if (!item.type) {
+    const label = item.label?.toLowerCase() ?? "";
+    if (label.includes("birthday")) return "birthday";
+    if (label.includes("anniversary")) return "anniversary";
+  }
+  return "other";
+}
+
 export async function getImportantDatesStats(options: {
   startDate: Date;
   endDate: Date;
@@ -74,8 +88,7 @@ export async function getImportantDatesStats(options: {
     .map((item) => {
       if (!item.month || !item.day) return null;
 
-      const rawType = item.type?.type?.toLowerCase();
-      const type = rawType === "birthday" || rawType === "anniversary" ? rawType : "other";
+      const type = classifyDate(item);
       byTypeCount[type] += 1;
 
       const daysUntil = getDaysUntil(item.month, item.day);
@@ -99,8 +112,7 @@ export async function getImportantDatesStats(options: {
     .sort((a, b) => a.daysUntil - b.daysUntil);
 
   for (const item of dates) {
-    const rawType = item.type?.type?.toLowerCase();
-    const type = rawType === "birthday" || rawType === "anniversary" ? rawType : "other";
+    const type = classifyDate(item);
     if (!item.month || !item.day) {
       byTypeCount[type] += 1;
     }
