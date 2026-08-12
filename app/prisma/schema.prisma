@@ -1238,11 +1238,14 @@ model UserNotificationChannel {
 
 /// Sent notifications tracking
 model UserNotificationSent {
-  id        String   @id @default(uuid())
-  subject   String?
-  body      String?
-  sentAt    DateTime @default(now())
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  subject    String?
+  body       String?
+  status     String   @default("sent") // sent, failed
+  error      String?
+  reminderId String? // ContactReminder id this delivery was for (dedup per day)
+  sentAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
 
   channelId String
 

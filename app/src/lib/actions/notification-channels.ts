@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendToChannel } from "@/lib/notifications/transport";
 import crypto from "crypto";
 
 export interface ActionResult {
@@ -215,9 +216,11 @@ export async function sendTestNotification(
       return { success: false, error: "Channel not found" };
     }
 
-    // For now, just log and record the notification
-    // In production, this would actually send the notification
-    console.log(`[TEST] Sending notification to ${channel.type}: ${channel.content}`);
+    const result = await sendToChannel(
+      channel,
+      "Test Notification",
+      "This is a test notification from Monica CRM."
+    );
 
     // Record the sent notification
     await db.userNotificationSent.create({
@@ -225,14 +228,17 @@ export async function sendTestNotification(
         channelId: channel.id,
         subject: "Test Notification",
         body: "This is a test notification from Monica CRM.",
+        status: result.ok ? "sent" : "failed",
+        error: result.error ?? null,
       },
     });
 
-    // TODO: Implement actual sending:
-    // - Email: use nodemailer or similar
-    // - Telegram: use Telegram Bot API
-
-    return { success: true, data: { message: "Test notification sent" } };
+    return {
+      success: result.ok,
+      ...(result.ok
+        ? { data: { message: "Test notification sent" } }
+        : { error: result.error }),
+    };
   } catch (error) {
     console.error("Error sending test notification:", error);
     return { success: false, error: "Failed to send test notification" };
