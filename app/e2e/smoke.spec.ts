@@ -14,8 +14,11 @@ async function registerAndLogin(page: import("@playwright/test").Page) {
   await expect(page.getByText("Sign in to your account")).toBeVisible();
   await page.goto("/register", { waitUntil: "domcontentloaded" });
   await expect(page.getByText("Create your account")).toBeVisible();
+  // Cold-start guard: wait for hydration so fills aren't wiped by React mount
+  await page.waitForLoadState("networkidle");
 
   await page.locator("#firstName").fill("E2E");
+  await expect(page.locator("#firstName")).toHaveValue("E2E");
   await page.locator("#lastName").fill("User");
   await page.locator("#email").fill(email);
   await page.locator("#password").fill(password);
