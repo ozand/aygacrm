@@ -177,7 +177,7 @@ export function RelationshipForm({
               </SelectTrigger>
               <SelectContent>
                 {contacts.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="none" disabled>
                     No other contacts available
                   </SelectItem>
                 ) : (
@@ -199,7 +199,7 @@ export function RelationshipForm({
               </SelectTrigger>
               <SelectContent>
                 {relationshipTypes.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="none" disabled>
                     No relationship types available
                   </SelectItem>
                 ) : (

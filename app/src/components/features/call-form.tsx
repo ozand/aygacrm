@@ -207,7 +207,7 @@ export function CallForm({
                 </SelectTrigger>
                 <SelectContent>
                   {callReasonTypes.length === 0 ? (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="none" disabled>
                       No reasons available
                     </SelectItem>
                   ) : (

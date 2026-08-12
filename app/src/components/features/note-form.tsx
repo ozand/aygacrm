@@ -36,7 +36,7 @@ export function NoteForm({ contactId, emotions = [], onSuccess, onCancel }: Note
   async function handleSubmit(formData: FormData) {
     setError(null);
     formData.set("contactId", contactId);
-    if (emotionId) {
+    if (emotionId && emotionId !== "none") {
       formData.set("emotionId", emotionId);
     }
 
@@ -113,7 +113,7 @@ export function NoteForm({ contactId, emotions = [], onSuccess, onCancel }: Note
               <SelectValue placeholder="Select mood" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No mood</SelectItem>
+              <SelectItem value="none">No mood</SelectItem>
               {emotions.map((e) => (
                 <SelectItem key={e.id} value={e.id}>
                   <span className="flex items-center gap-2">

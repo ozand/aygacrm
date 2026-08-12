@@ -280,12 +280,17 @@ export function GroupManager({ groups, groupTypes }: GroupManagerProps) {
                 className="flex-1"
               />
               {groupTypes.length > 0 && (
-                <Select value={newGroupTypeId} onValueChange={setNewGroupTypeId}>
+                <Select
+                  value={newGroupTypeId}
+                  onValueChange={(v) =>
+                    setNewGroupTypeId(v === "none" ? "" : v)
+                  }
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Type (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No type</SelectItem>
+                    <SelectItem value="none">No type</SelectItem>
                     {groupTypes.map((type) => (
                       <SelectItem key={type.id} value={type.id}>
                         {type.label}

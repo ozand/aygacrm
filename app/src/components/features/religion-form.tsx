@@ -37,7 +37,10 @@ export function ReligionForm({
   const handleSave = async () => {
     setLoading(true);
     try {
-      await updateContactReligion(contactId, religionId || null);
+      await updateContactReligion(
+        contactId,
+        religionId && religionId !== "none" ? religionId : null
+      );
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating religion:", error);
@@ -87,7 +90,7 @@ export function ReligionForm({
           <SelectValue placeholder="Select religion/belief" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Not specified</SelectItem>
+          <SelectItem value="none">Not specified</SelectItem>
           {religions.map((r) => (
             <SelectItem key={r.id} value={r.id}>
               {r.name}

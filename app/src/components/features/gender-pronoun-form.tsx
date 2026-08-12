@@ -113,12 +113,15 @@ export function GenderPronounForm({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="gender">Gender</Label>
-        <Select value={genderId} onValueChange={setGenderId}>
+        <Select
+          value={genderId}
+          onValueChange={(v) => setGenderId(v === "none" ? "" : v)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select gender" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Not specified</SelectItem>
+            <SelectItem value="none">Not specified</SelectItem>
             {genders.map((g) => (
               <SelectItem key={g.id} value={g.id}>
                 {g.name}
@@ -130,12 +133,15 @@ export function GenderPronounForm({
 
       <div className="space-y-2">
         <Label htmlFor="pronoun">Pronouns</Label>
-        <Select value={pronounId} onValueChange={setPronounId}>
+        <Select
+          value={pronounId}
+          onValueChange={(v) => setPronounId(v === "none" ? "" : v)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select pronouns" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Not specified</SelectItem>
+            <SelectItem value="none">Not specified</SelectItem>
             {pronouns.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name}

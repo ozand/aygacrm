@@ -137,12 +137,12 @@ export function PostForm({ journalId, post, slices = [], onSuccess }: PostFormPr
             {slices.length > 0 && (
               <div className="space-y-2">
                 <Label>Slice of Life</Label>
-                <Select value={sliceOfLifeId} onValueChange={setSliceOfLifeId}>
+                <Select value={sliceOfLifeId} onValueChange={(v) => setSliceOfLifeId(v === "none" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {slices.map((slice) => (
                       <SelectItem key={slice.id} value={slice.id}>
                         {slice.name}
