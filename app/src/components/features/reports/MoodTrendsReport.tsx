@@ -20,8 +20,13 @@ interface MoodTrendsReportProps {
 }
 
 export function MoodTrendsReport({ contactId }: MoodTrendsReportProps) {
-  const [moodStats, setMoodStats] = useState<any>(null); // Replace 'any' with proper type later
+  const [moodStats, setMoodStats] = useState<{
+    totalEvents: number;
+    averageSleep: number | null;
+    byParameter: { label: string; count: number }[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState("30"); // default to last 30 days
 
   useEffect(() => {
@@ -30,19 +35,25 @@ export function MoodTrendsReport({ contactId }: MoodTrendsReportProps) {
 
   const fetchMoodStats = async () => {
     setLoading(true);
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - parseInt(timeframe));
+    setError(null);
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - parseInt(timeframe));
 
-    const stats = await getMoodStats(contactId || "all", { // Need to handle "all" contacts in getMoodStats
-      startDate,
-      endDate,
-    });
-    setMoodStats(stats);
-    setLoading(false);
+      const stats = await getMoodStats(contactId || "all", { // Need to handle "all" contacts in getMoodStats
+        startDate,
+        endDate,
+      });
+      setMoodStats(stats);
+    } catch {
+      setError("Couldn't load mood data.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const chartData = moodStats?.byParameter.map((param: any) => ({
+  const chartData = moodStats?.byParameter.map((param) => ({
     name: param.label,
     count: param.count,
   }));
@@ -74,7 +85,15 @@ export function MoodTrendsReport({ contactId }: MoodTrendsReportProps) {
           {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
         </div>
 
-        {!loading && moodStats && (
+        {!loading && error && (
+          <p className="text-sm text-muted-foreground">Couldn't load mood data.</p>
+        )}
+
+        {!loading && !error && (!moodStats || moodStats.byParameter.length === 0) && (
+          <p className="text-sm text-muted-foreground">No mood entries yet.</p>
+        )}
+
+        {!loading && !error && moodStats && moodStats.byParameter.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <p>Total mood entries: {moodStats.totalEvents}</p>
@@ -91,7 +110,7 @@ export function MoodTrendsReport({ contactId }: MoodTrendsReportProps) {
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }} />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
                   </RechartsBarChart>
                 </ResponsiveContainer>
               </div>

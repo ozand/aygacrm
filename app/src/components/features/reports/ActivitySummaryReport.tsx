@@ -112,14 +112,14 @@ export function ActivitySummaryReport() {
                       <Tooltip
                         cursor={{ fill: "transparent" }}
                         contentStyle={{
-                          backgroundColor: "hsl(var(--popover))",
-                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "var(--popover)",
+                          border: "1px solid var(--border)",
                           borderRadius: "var(--radius)",
                         }}
                       />
-                      <Bar dataKey="activities" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="notes" fill="hsl(var(--secondary-foreground))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="calls" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="activities" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="notes" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="calls" fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
                     </RechartsBarChart>
                   </ResponsiveContainer>
                 </div>

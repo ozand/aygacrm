@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Bell, Mail, MessageSquare, Settings, AtSign, SmilePlus } from "lucide-react";
+import { Bell, Mail, MessageSquare, Settings, SmilePlus } from "lucide-react";
 import { getNotificationChannels, getSentNotifications } from "@/lib/actions/notification-channels";
 import { getContactInformationTypes, getAddressTypes } from "@/lib/actions/contact-info";
 import { getCallReasons } from "@/lib/actions/calls";
@@ -148,23 +148,12 @@ export default async function SettingsPage() {
         <PasswordForm />
 
         {/* Contact Information Types */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AtSign className="h-5 w-5" />
-              Contact Information Types
-            </CardTitle>
-            <CardDescription>
-              Define types of contact information (email, phone, social media, etc.) and address types.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ContactInfoTypeManager
-              contactInfoTypes={contactInfoTypes}
-              addressTypes={addressTypes}
-            />
-          </CardContent>
-        </Card>
+        <div className="md:col-span-2">
+          <ContactInfoTypeManager
+            contactInfoTypes={contactInfoTypes}
+            addressTypes={addressTypes}
+          />
+        </div>
 
         {/* Call Reasons */}
         <CallReasonManager initialReasonTypes={callReasons} />

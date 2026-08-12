@@ -24,7 +24,7 @@ export function PossibleDuplicatesSection() {
         </div>
       )}
 
-      {!isExpanded && <div className="flex items-center text-xs text-muted-foreground"><ChevronRight className="mr-1 h-3 w-3" />Collapsed by default</div>}
+      {!isExpanded && <div className="flex items-center text-xs text-muted-foreground"><ChevronRight className="mr-1 h-3 w-3" />Expand to review possible duplicates</div>}
     </section>
   );
 }

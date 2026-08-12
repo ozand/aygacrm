@@ -96,12 +96,12 @@ export function GiftsLoansReport() {
                       <Tooltip
                         cursor={{ fill: "transparent" }}
                         contentStyle={{
-                          backgroundColor: "hsl(var(--popover))",
-                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "var(--popover)",
+                          border: "1px solid var(--border)",
                           borderRadius: "var(--radius)",
                         }}
                       />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="count" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
                     </RechartsBarChart>
                   </ResponsiveContainer>
                 </div>

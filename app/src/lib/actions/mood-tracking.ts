@@ -298,10 +298,10 @@ export async function getMoodStats(contactId?: string, options?: {
   const { vault } = await getUserVaultAndAccount();
 
   const where: {
-    vaultId: string;
+    contact: { vaultId: string };
     contactId?: string;
     ratedAt?: { gte?: Date; lte?: Date };
-  } = { vaultId: vault.id };
+  } = { contact: { vaultId: vault.id } };
 
   if (contactId && contactId !== "all") {
     // Verify contact belongs to vault
