@@ -75,6 +75,7 @@ export function ReligionForm({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
+          aria-label="Edit religion"
           onClick={() => setIsEditing(true)}
         >
           <Pencil className="h-4 w-4" />

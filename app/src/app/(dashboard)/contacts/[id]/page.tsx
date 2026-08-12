@@ -174,7 +174,7 @@ export default async function ContactDetailPage({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/contacts">
+            <Link href="/contacts" aria-label="Back to contacts">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

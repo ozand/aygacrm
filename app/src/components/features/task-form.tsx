@@ -127,6 +127,7 @@ export function TaskForm({ contactId, existingTasks }: TaskFormProps) {
                 onCheckedChange={() => handleToggle(task.id)}
                 disabled={isPending}
                 className="mt-0.5"
+                aria-label={task.completed ? `Mark "${task.name}" as incomplete` : `Mark "${task.name}" as complete`}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">{task.name}</p>
@@ -158,6 +159,7 @@ export function TaskForm({ contactId, existingTasks }: TaskFormProps) {
                 onClick={() => handleDelete(task.id)}
                 disabled={isPending}
                 className="h-8 w-8"
+                aria-label={`Delete task "${task.name}"`}
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>
@@ -182,6 +184,7 @@ export function TaskForm({ contactId, existingTasks }: TaskFormProps) {
                 onCheckedChange={() => handleToggle(task.id)}
                 disabled={isPending}
                 className="mt-0.5"
+                aria-label={task.completed ? `Mark "${task.name}" as incomplete` : `Mark "${task.name}" as complete`}
               />
               <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium line-through">{task.name}</p>
@@ -192,6 +195,7 @@ export function TaskForm({ contactId, existingTasks }: TaskFormProps) {
                 onClick={() => handleDelete(task.id)}
                 disabled={isPending}
                 className="h-8 w-8"
+                aria-label={`Delete task "${task.name}"`}
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>

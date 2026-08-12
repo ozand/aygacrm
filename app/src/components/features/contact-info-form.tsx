@@ -201,6 +201,7 @@ export function ContactInfoForm({
             size="sm"
             onClick={() => handleStartEdit(info)}
             disabled={isPending}
+            aria-label="Edit contact information"
           >
             <Edit2 className="w-3 h-3" />
           </Button>
@@ -210,6 +211,7 @@ export function ContactInfoForm({
             onClick={() => handleDelete(info.id)}
             disabled={isPending}
             className="text-destructive hover:text-destructive"
+            aria-label="Delete contact information"
           >
             <Trash2 className="w-3 h-3" />
           </Button>

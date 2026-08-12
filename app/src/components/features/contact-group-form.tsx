@@ -216,6 +216,7 @@ export function ContactGroupForm({
             onClick={handleAddToGroup}
             disabled={!selectedGroupId || isPending}
             size="icon"
+            aria-label="Add to group"
           >
             <Plus className="w-4 h-4" />
           </Button>

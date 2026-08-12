@@ -109,10 +109,10 @@ export function CalendarView() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+            <Button variant="outline" size="icon" onClick={goToPreviousMonth} aria-label="Previous month">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={goToNextMonth}>
+            <Button variant="outline" size="icon" onClick={goToNextMonth} aria-label="Next month">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -191,10 +191,10 @@ export function CalendarView() {
           </div>
           {selectedDate && (
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => setSelectedDate(subDayUtil(selectedDate, 1))}>
+              <Button variant="outline" size="icon" onClick={() => setSelectedDate(subDayUtil(selectedDate, 1))} aria-label="Previous day">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setSelectedDate(addDayUtil(selectedDate, 1))}>
+              <Button variant="outline" size="icon" onClick={() => setSelectedDate(addDayUtil(selectedDate, 1))} aria-label="Next day">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
