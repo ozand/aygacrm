@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
+import { checkRateLimit } from "./rate-limit";
 
 // Standard API error response
 export interface ApiError {
@@ -213,8 +214,23 @@ export function withApiAuth(
       return apiError("FORBIDDEN", 403);
     }
 
+    // Per-token rate limiting
+    const rl = checkRateLimit(authContext.tokenId);
+    if (!rl.allowed) {
+      const res = apiError("RATE_LIMITED", 429);
+      res.headers.set("Retry-After", String(rl.resetSeconds));
+      res.headers.set("X-RateLimit-Limit", String(rl.limit));
+      res.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+      res.headers.set("X-RateLimit-Reset", String(rl.resetSeconds));
+      return res;
+    }
+
     const resolvedParams = params ? await params : undefined;
-    return handler(request, authContext, resolvedParams);
+    const response = await handler(request, authContext, resolvedParams);
+    response.headers.set("X-RateLimit-Limit", String(rl.limit));
+    response.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+    response.headers.set("X-RateLimit-Reset", String(rl.resetSeconds));
+    return response;
   };
 }
 
