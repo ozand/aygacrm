@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
 import { checkRateLimit } from "./rate-limit";
+import {
+  hashRequest,
+  lookupIdempotency,
+  storeIdempotency,
+  sweepExpiredIdempotency,
+} from "./idempotency";
 
 // Standard API error response
 export interface ApiError {
@@ -52,6 +58,7 @@ export const API_ERRORS = {
   INVALID_PARAMS: { code: 41, message: "Invalid parameters." },
   UNAUTHORIZED: { code: 42, message: "Unauthorized. Please provide a valid API token." },
   FORBIDDEN: { code: 43, message: "You don't have permission to access this resource." },
+  IDEMPOTENCY_CONFLICT: { code: 44, message: "Idempotency-Key was reused with a different request." },
   INTERNAL_ERROR: { code: 50, message: "An internal error occurred." },
 } as const;
 
@@ -225,12 +232,57 @@ export function withApiAuth(
       return res;
     }
 
+    const applyRateHeaders = (res: NextResponse): NextResponse => {
+      res.headers.set("X-RateLimit-Limit", String(rl.limit));
+      res.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+      res.headers.set("X-RateLimit-Reset", String(rl.resetSeconds));
+      return res;
+    };
+
+    // Idempotency for write operations carrying an Idempotency-Key header
+    const idemKey = request.headers.get("idempotency-key");
+    const isWrite = ["POST", "PUT", "PATCH", "DELETE"].includes(request.method);
+
+    if (isWrite && idemKey) {
+      const path = new URL(request.url).pathname;
+      // clone() so the handler can still read the body
+      const bodyText = await request.clone().text();
+      const requestHash = hashRequest(request.method, path, bodyText);
+      const found = await lookupIdempotency(authContext.tokenId, idemKey, requestHash);
+
+      if (found.status === "conflict") {
+        return applyRateHeaders(
+          apiError("IDEMPOTENCY_CONFLICT", 409)
+        );
+      }
+
+      if (found.status === "hit") {
+        const replay = new NextResponse(found.responseBody, {
+          status: found.statusCode,
+          headers: { "content-type": "application/json", "Idempotent-Replay": "true" },
+        });
+        return applyRateHeaders(replay);
+      }
+
+      const resolvedParams = params ? await params : undefined;
+      const response = await handler(request, authContext, resolvedParams);
+      const responseBody = await response.clone().text();
+      await storeIdempotency({
+        tokenId: authContext.tokenId,
+        key: idemKey,
+        method: request.method,
+        path,
+        requestHash,
+        statusCode: response.status,
+        responseBody,
+      });
+      void sweepExpiredIdempotency();
+      return applyRateHeaders(response);
+    }
+
     const resolvedParams = params ? await params : undefined;
     const response = await handler(request, authContext, resolvedParams);
-    response.headers.set("X-RateLimit-Limit", String(rl.limit));
-    response.headers.set("X-RateLimit-Remaining", String(rl.remaining));
-    response.headers.set("X-RateLimit-Reset", String(rl.resetSeconds));
-    return response;
+    return applyRateHeaders(response);
   };
 }
 

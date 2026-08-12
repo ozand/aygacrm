@@ -1333,6 +1333,23 @@ model ApiToken {
   @@map("api_tokens")
 }
 
+/// Stored results for API idempotency keys so retried writes don't double-apply.
+model ApiIdempotencyKey {
+  id           String   @id @default(uuid())
+  key          String
+  tokenId      String
+  method       String
+  path         String
+  requestHash  String
+  statusCode   Int
+  responseBody String
+  createdAt    DateTime @default(now())
+
+  @@unique([tokenId, key])
+  @@index([createdAt])
+  @@map("api_idempotency_keys")
+}
+
 // ============================================
 // AUDIT LOGS
 // ============================================
