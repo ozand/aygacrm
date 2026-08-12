@@ -8,10 +8,18 @@
 ## Current Priority: Product Polish & Quality
 
 ### Next Up
-- [ ] Add E2E tests with Playwright (contact creation, search, navigation)
 - [ ] Reminder notification delivery (email/Telegram — currently stubbed)
 
 ### Done
+- [x] E2E tests with Playwright complete — smoke spec passes locally against production server (`next start`, port 4000): register → login → create contact → global search → contact detail
+- [x] Fixed runtime crash on server-action pages — `API_ABILITIES` / `MODULE_TYPES` const exports moved out of "use server" modules into `src/lib/api-abilities.ts` / `src/lib/module-types.ts` (build passed but module eval failed at runtime)
+- [x] Smoke spec fixed — targeted sidebar GlobalSearch palette (placeholder "…records...") instead of legacy header SearchDialog; `exact: true` on Contacts heading; search result click-through to contact detail verifies email
+- [x] Fixed tsc error in external-identities.test.ts — PrismaClientKnownRequestError now requires `clientVersion`
+- [x] Fix `seed.ts` Next.js `use server` export violation by moving `SeedResult` type out of server module
+- [x] Playwright scaffolding added — `playwright.config.ts`, `test:e2e` script, Chromium project
+- [x] Minimal smoke spec added — register, login, create contact, verify global search can find it
+- [x] CI updated to install Playwright Chromium and run the smoke spec after build
+- [x] E2E rollout refined to use production-server path (`next start`) for stable smoke execution instead of dev-mode compilation
 - [x] Unit tests for merge.ts — mergeContacts (field transfer, relation transfer, label/group/tag dedup, soft-delete, merge log), unmergeContacts, getMergeHistory
 - [x] Unit tests for provenance.ts — recordProvenance (deactivate+create, multi-field, setBy), getProvenanceForContact, getProvenanceHistory
 - [x] Unit tests for external-identities.ts — CRUD operations, vault scoping, P2002 duplicate handling, findContactsByExternalId

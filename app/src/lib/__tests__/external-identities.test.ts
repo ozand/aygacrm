@@ -192,7 +192,7 @@ describe("external identities server actions", () => {
 
   it("addExternalIdentity returns duplicate error for P2002", async () => {
     mockDb.externalIdentity.create.mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Duplicate", { code: "P2002" })
+      new Prisma.PrismaClientKnownRequestError("Duplicate", { code: "P2002", clientVersion: "test" })
     );
     const formData = new FormData();
     formData.set("contactId", "contact-1");

@@ -55,8 +55,8 @@ import {
   createApiToken,
   deleteApiToken,
   revokeAllApiTokens,
-  API_ABILITIES,
 } from "@/lib/actions/api-tokens";
+import { API_ABILITIES } from "@/lib/api-abilities";
 import { formatDistanceToNow } from "date-fns";
 
 interface ApiToken {

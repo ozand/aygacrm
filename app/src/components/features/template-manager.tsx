@@ -58,8 +58,8 @@ import {
   deleteModule,
   reorderModules,
   seedDefaultTemplate,
-  MODULE_TYPES,
 } from "@/lib/actions/templates";
+import { MODULE_TYPES } from "@/lib/module-types";
 
 interface Module {
   id: string;
