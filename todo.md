@@ -8,9 +8,10 @@
 ## Current Priority: Product Polish & Quality
 
 ### Next Up
-- [ ] Reminder notification delivery (email/Telegram — currently stubbed) — GitHub issue #16
+- [ ] (nothing open) — all 16 diagnostic issues closed
 
 ### Done
+- [x] #16 Reminder notification delivery — email (nodemailer/SMTP) + Telegram (Bot API), CRON_SECRET-protected /api/cron/reminders route, per-day dedup, failed-status + retry-on-next-run, 17 unit tests; verified live against a local SMTP catcher
 - [x] GitHub repo created (ozand/monica-crm, private) — 16 issues filed from full surf-CLI E2E diagnostic
 - [x] Issues #1-15 fixed and closed across 5 increments (commits caa2983..7155a06):
   - #1 SelectItem value="" crashes (10 spots, 8 files) — "none" sentinel + submit mapping
