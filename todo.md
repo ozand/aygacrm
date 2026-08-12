@@ -8,7 +8,13 @@
 ## Current Priority: Product Polish & Quality
 
 ### Next Up
-- [ ] (nothing open) — all 16 diagnostic issues closed
+- [ ] #17 Migrate file/photo storage to MinIO (S3) — BLOCKED on server-side provisioning (bucket + service account on ozubuntu MinIO) + credentials; code can't be verified through dev→test→rollout without a live bucket
+
+### Done (platform-hardening batch, docs-gap issues #17-21)
+- [x] #21 Next.js middleware — edge-safe NextAuth split config (auth.config.ts), gates dashboard routes with callbackUrl return-to, bounces authed users off /login,/register
+- [x] #20 Rate limiting — in-memory per-token fixed window in withApiAuth, 429 + Retry-After/X-RateLimit-* headers, API_RATE_LIMIT_PER_MINUTE (default 120), verified live (5 pass → 429)
+- [x] #18 Idempotency keys — Idempotency-Key header on v1 writes, replay stored response, 409 on same-key-different-body, 24h TTL, ApiIdempotencyKey model, verified live (replay=same id, conflict=409)
+- [x] #19 OpenAPI 3.1 spec — docs/api/openapi.json (23 endpoints), served at /api/v1/openapi.json, redocly lint 0 warnings, CI gate, schemas spot-checked vs route Zod
 
 ### Done
 - [x] #16 Reminder notification delivery — email (nodemailer/SMTP) + Telegram (Bot API), CRON_SECRET-protected /api/cron/reminders route, per-day dedup, failed-status + retry-on-next-run, 17 unit tests; verified live against a local SMTP catcher
