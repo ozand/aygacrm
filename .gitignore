@@ -44,3 +44,12 @@ app/src/generated/
 nul
 *.pem
 .vercel
+
+# Tool internals
+.serena/
+.config/
+.uv/
+
+# Playwright artifacts
+app/test-results/
+app/playwright-report/

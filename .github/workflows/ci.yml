@@ -28,7 +28,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monica_test
       NEXTAUTH_SECRET: ci-test-secret
-      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: http://127.0.0.1:4000
+      AUTH_URL: http://127.0.0.1:4000
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:4000
 
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +57,10 @@ jobs:
         working-directory: app
         run: pnpm exec prisma db push --skip-generate
 
+      - name: Install Playwright browsers
+        working-directory: app
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: TypeScript check
         working-directory: app
         run: pnpm exec tsc --noEmit --skipLibCheck
@@ -66,3 +72,7 @@ jobs:
       - name: Build
         working-directory: app
         run: pnpm next build
+
+      - name: Run E2E smoke test
+        working-directory: app
+        run: pnpm exec playwright test e2e/smoke.spec.ts --project=chromium

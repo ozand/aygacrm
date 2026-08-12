@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { SeedResult } from "@/lib/seed-types";
 import { seedPetCategories } from "./pets";
 import { seedLifeEventCategories } from "./life-events";
 import { seedGiftOccasions } from "./gifts";
@@ -14,12 +15,6 @@ import { ensureDefaultAddressTypes } from "./addresses";
 import { seedCurrencies } from "./currencies";
 import { seedJournalMetrics } from "./journal";
 import { seedDefaultTemplate } from "./templates";
-
-export interface SeedResult {
-  success: boolean;
-  seeded: string[];
-  errors: string[];
-}
 
 // Helper to get current user's account
 async function getUserVaultAndAccount() {
