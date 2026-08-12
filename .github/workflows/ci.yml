@@ -65,6 +65,10 @@ jobs:
         working-directory: app
         run: pnpm exec tsc --noEmit --skipLibCheck
 
+      - name: Validate OpenAPI spec
+        working-directory: app
+        run: pnpm lint:openapi
+
       - name: Run tests
         working-directory: app
         run: pnpm test
