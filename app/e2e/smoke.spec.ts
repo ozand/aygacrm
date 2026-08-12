@@ -49,8 +49,9 @@ test("user can navigate, create contact, and find it via global search", async (
   await page.getByLabel("Email").fill(contactEmail);
   await page.getByRole("button", { name: "Create Contact" }).click();
 
-  await page.waitForURL(/\/contacts$/);
-  await expect(page.getByText(contactName)).toBeVisible();
+  // Creation lands on the new contact's detail page
+  await page.waitForURL(/\/contacts\/[^/]+$/);
+  await expect(page.getByText(contactName).first()).toBeVisible();
 
   await page.getByRole("button", { name: "Search... Ctrl K" }).click();
   await page.getByPlaceholder("Search contacts, notes, tasks, records...").fill(contactName);

@@ -145,6 +145,7 @@ export function ImportantDateForm({
             placeholder="YYYY"
             disabled={isPending}
           />
+          <p className="text-xs text-muted-foreground">Leave empty if unknown — the date recurs yearly, but age won't be shown.</p>
         </div>
       </div>
 

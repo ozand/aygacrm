@@ -86,15 +86,15 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+            <CardTitle className="text-sm font-medium">Events in 30 Days</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.upcomingEvents}</div>
             <p className="text-xs text-muted-foreground">
               {stats.upcomingEvents === 0
-                ? "No events this month"
-                : `In the next 30 days`}
+                ? "No events in the next 30 days"
+                : `Birthdays and important dates`}
             </p>
           </CardContent>
         </Card>

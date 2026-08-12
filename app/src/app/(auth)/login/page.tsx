@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
+  const googleEnabled = process.env.NEXT_PUBLIC_AUTH_GOOGLE === "1";
+  const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,6 +87,7 @@ export default function LoginPage() {
           </Button>
         </form>
         
+        {(googleEnabled || githubEnabled) && (
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -96,8 +99,9 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-          
+
           <div className="mt-6 grid grid-cols-2 gap-4">
+            {googleEnabled && (
             <Button
               variant="outline"
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
@@ -105,6 +109,8 @@ export default function LoginPage() {
             >
               Google
             </Button>
+            )}
+            {githubEnabled && (
             <Button
               variant="outline"
               onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
@@ -112,8 +118,10 @@ export default function LoginPage() {
             >
               GitHub
             </Button>
+            )}
           </div>
         </div>
+        )}
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">

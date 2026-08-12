@@ -1,5 +1,3 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
 import { MoodTrendsReport } from "@/components/features/reports/MoodTrendsReport";
 import { ImportantDatesReport } from "@/components/features/reports/ImportantDatesReport";
 import { ActivitySummaryReport } from "@/components/features/reports/ActivitySummaryReport";
@@ -16,21 +14,6 @@ export default function ReportsPage() {
       </p>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Geographical Distribution
-            </CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Coming Soon</div>
-            <p className="text-xs text-muted-foreground">
-              Visualize contacts on a map.
-            </p>
-          </CardContent>
-        </Card>
-
         <MoodTrendsReport />
 
         <ImportantDatesReport />

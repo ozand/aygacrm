@@ -70,7 +70,12 @@ export function ContactForm({
       }
 
       if (result.success) {
-        router.push("/contacts");
+        if (mode === "create") {
+          const created = (result as { data?: { id?: string } }).data;
+          router.push(created?.id ? `/contacts/${created.id}` : "/contacts");
+        } else {
+          router.push("/contacts");
+        }
       } else {
         setError(result.error || "An error occurred");
       }
