@@ -8,9 +8,20 @@
 ## Current Priority: Product Polish & Quality
 
 ### Next Up
-- [ ] Reminder notification delivery (email/Telegram — currently stubbed)
+- [ ] Reminder notification delivery (email/Telegram — currently stubbed) — GitHub issue #16
 
 ### Done
+- [x] GitHub repo created (ozand/monica-crm, private) — 16 issues filed from full surf-CLI E2E diagnostic
+- [x] Issues #1-15 fixed and closed across 5 increments (commits caa2983..7155a06):
+  - #1 SelectItem value="" crashes (10 spots, 8 files) — "none" sentinel + submit mapping
+  - #2/#11 legacy SearchDialog deleted — single Ctrl+K palette, pluralization gone with it
+  - #3 Mood Trends infinite Loading — root cause was invalid vaultId filter in getMoodStats + no error handling
+  - #4 important dates now typed (form select + server get-or-create + label fallback in reports)
+  - #5 Settings duplicate card, #6 invalid hsl(var()) chart colors → var(--chart-N), #7 DialogTitle a11y, #8 debug text
+  - #9 OAuth buttons gated by NEXT_PUBLIC_AUTH_* flags, #12 dashboard stat renamed "Events in 30 Days"
+  - #13 create-contact redirects to detail page, #14 year hint, #15 Coming Soon card removed
+  - #10 aria-labels on icon-only controls (layout, calendar, contact detail) — 0 nameless app elements
+- [x] Smoke spec hardened against cold-start hydration race + updated for detail-page redirect
 - [x] E2E tests with Playwright complete — smoke spec passes locally against production server (`next start`, port 4000): register → login → create contact → global search → contact detail
 - [x] Fixed runtime crash on server-action pages — `API_ABILITIES` / `MODULE_TYPES` const exports moved out of "use server" modules into `src/lib/api-abilities.ts` / `src/lib/module-types.ts` (build passed but module eval failed at runtime)
 - [x] Smoke spec fixed — targeted sidebar GlobalSearch palette (placeholder "…records...") instead of legacy header SearchDialog; `exact: true` on Contacts heading; search result click-through to contact detail verifies email
