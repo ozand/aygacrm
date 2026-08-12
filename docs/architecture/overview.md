@@ -37,8 +37,16 @@ External client → API token auth → REST v1 routes → Prisma → PostgreSQL
 - Client Components are used only when necessary.
 - Server Actions handle mutations whenever they fit the route.
 
+## Middleware
+
+`app/src/middleware.ts` runs on the Edge runtime using an edge-safe NextAuth
+config (`app/src/lib/auth.config.ts`, no Prisma/bcrypt). It gates dashboard
+routes — redirecting unauthenticated requests to `/login?callbackUrl=…` and
+sending authenticated users away from `/login` and `/register`. The `matcher`
+excludes `/api/*`, Next internals, and static assets, so API token auth stays
+in `withApiAuth`.
+
 ## Current limitations
 
-- No middleware layer yet
 - `next.config` is currently empty
 - No CI/CD pipeline is defined yet

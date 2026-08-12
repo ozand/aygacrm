@@ -33,7 +33,10 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/dashboard");
+        // Honor middleware's return-to; only allow same-site relative paths
+        const raw = new URLSearchParams(window.location.search).get("callbackUrl");
+        const target = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+        router.push(target);
         router.refresh();
       }
     } catch {
