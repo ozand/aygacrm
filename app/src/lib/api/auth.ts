@@ -137,17 +137,10 @@ export function generateToken(): { token: string; prefix: string } {
   return { token, prefix };
 }
 
-// Validate API token from request
-export async function validateApiToken(
-  request: NextRequest
+// Validate a raw API token value (hash + lookup + expiry + last-used bump)
+export async function validateApiTokenValue(
+  token: string
 ): Promise<ApiAuthContext | null> {
-  const authHeader = request.headers.get("authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
   const hashedToken = hashToken(token);
 
   try {
@@ -187,6 +180,20 @@ export async function validateApiToken(
     console.error("Error validating API token:", error);
     return null;
   }
+}
+
+// Validate API token from request
+export async function validateApiToken(
+  request: NextRequest
+): Promise<ApiAuthContext | null> {
+  const authHeader = request.headers.get("authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  return validateApiTokenValue(token);
 }
 
 // Check if token has specific ability

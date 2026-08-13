@@ -2,9 +2,39 @@
 
 ## Supported interfaces
 
-- **REST API v1** — current and supported now
-- **CLI** — planned
-- **MCP** — planned
+- **REST API v1** — current and supported now (OpenAPI spec at `/api/v1/openapi.json`)
+- **MCP** — real Model Context Protocol server, stdio transport (plus a legacy custom HTTP endpoint)
+- **CLI** — partial (direct-DB wrapper); full rebuild planned
+
+## MCP server
+
+A spec-compliant MCP server is available over stdio for clients like Claude
+Code / Claude Desktop. It reuses the same tools, ability scoping, and audit
+logging as the API.
+
+- Entry point: `pnpm mcp` (or the `monica-mcp` bin) from `app/`.
+- Auth: set `MONICA_API_TOKEN` (an API token) in the environment; the server
+  validates it and scopes every tool call to that token's abilities.
+- Needs `DATABASE_URL` in the environment (loaded from `.env`).
+
+Register with an MCP client, e.g.:
+
+```json
+{
+  "mcpServers": {
+    "monica": {
+      "command": "pnpm",
+      "args": ["exec", "tsx", "src/mcp/monica-mcp.ts"],
+      "cwd": "/path/to/monica/app",
+      "env": { "MONICA_API_TOKEN": "<your-token>" }
+    }
+  }
+}
+```
+
+A legacy HTTP endpoint at `POST /api/mcp` with a custom `{tool, arguments}`
+shape remains for back-compat; new integrations should use the MCP stdio
+server.
 
 ## Current API
 
