@@ -8,7 +8,10 @@
 ## Current Priority: Product Polish & Quality
 
 ### Next Up
-- [ ] #17 Migrate file/photo storage to MinIO (S3) — BLOCKED on server-side provisioning (bucket + service account on ozubuntu MinIO) + credentials; code can't be verified through dev→test→rollout without a live bucket
+- [ ] (nothing open) — all 21 GitHub issues closed
+
+### Done (platform-hardening, cont.)
+- [x] #17 File/photo storage → MinIO (S3): src/lib/storage/s3.ts (AWS SDK v3), upload streams to bucket under vault/{id}/{type}/{uuid}-{name}, File.storageKey column, /api/files/{uuid} resolver 307→presigned (private bucket, S3_PUBLIC_ENDPOINT for browser reach). Verified live against ozubuntu bucket `monica` (canary + app upload→resolver→delete). Opus-reviewed, 4 risks fixed. Local .env holds creds (gitignored)
 
 ### Done (platform-hardening batch, docs-gap issues #17-21)
 - [x] #21 Next.js middleware — edge-safe NextAuth split config (auth.config.ts), gates dashboard routes with callbackUrl return-to, bounces authed users off /login,/register
