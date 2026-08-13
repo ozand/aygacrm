@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { deleteObject } from "@/lib/storage/s3";
 
 export interface ActionResult {
   success: boolean;
@@ -156,7 +157,14 @@ export async function deletePhoto(fileId: string): Promise<ActionResult> {
       where: { id: fileId },
     });
 
-    // Note: In production, also delete from storage (S3, local filesystem, etc.)
+    // Remove the backing object store copy (best-effort).
+    if (file.storageKey) {
+      try {
+        await deleteObject(file.storageKey);
+      } catch (err) {
+        console.error("Error deleting object from storage:", err);
+      }
+    }
 
     if (contactId) {
       revalidatePath(`/contacts/${contactId}`);

@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { deleteObject } from "@/lib/storage/s3";
 
 async function getUserVault() {
   const session = await auth();
@@ -70,8 +71,14 @@ export async function deleteFile(id: string) {
   // Delete from database
   await db.file.delete({ where: { id } });
 
-  // Note: Physical file deletion would need to be handled separately
-  // based on where files are stored (local, S3, etc.)
+  // Remove the backing object store copy (best-effort).
+  if (file.storageKey) {
+    try {
+      await deleteObject(file.storageKey);
+    } catch (err) {
+      console.error("Error deleting object from storage:", err);
+    }
+  }
 
   revalidatePath("/files");
   return { success: true };

@@ -1068,6 +1068,7 @@ model File {
   uuid        String   @unique
   name        String
   originalUrl String
+  storageKey  String? // MinIO/S3 object key; null for legacy local-disk files
   mimeType    String?
   size        Int? // in bytes
   type        String   @default("document") // document, photo, avatar

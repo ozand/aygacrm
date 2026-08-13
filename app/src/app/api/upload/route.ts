@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { isS3Configured, putObject } from "@/lib/storage/s3";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +28,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const contactId = formData.get("contactId") as string;
-    const fileType = (formData.get("type") as string) || "photo";
+    const rawType = (formData.get("type") as string) || "photo";
+    const ALLOWED_TYPES = ["avatar", "photo", "document"];
+    const fileType = ALLOWED_TYPES.includes(rawType) ? rawType : "photo";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -67,21 +70,31 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const fileUuid = crypto.randomUUID();
-    const ext = path.extname(file.name) || ".jpg";
-    const filename = `${fileUuid}${ext}`;
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "avatars");
-    await mkdir(uploadsDir, { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Save file to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const filePath = path.join(uploadsDir, filename);
-    await writeFile(filePath, buffer);
+    let storageKey: string | null = null;
+    let fileUrl: string;
 
-    // Generate URL
-    const fileUrl = `/uploads/avatars/${filename}`;
+    if (isS3Configured()) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const key = `vault/${userVault.vault.id}/${fileType}/${fileUuid}-${safeName}`;
+      await putObject(key, buffer, file.type);
+      storageKey = key;
+      fileUrl = `/api/files/${fileUuid}`;
+    } else {
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "avatars");
+      await mkdir(uploadsDir, { recursive: true });
+
+      // Save file to disk
+      const ext = path.extname(file.name) || ".jpg";
+      const filename = `${fileUuid}${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+      await writeFile(filePath, buffer);
+
+      fileUrl = `/uploads/avatars/${filename}`;
+    }
 
     // If uploading new avatar, demote old one
     if (fileType === "avatar" && contactId) {
@@ -97,6 +110,7 @@ export async function POST(request: NextRequest) {
         uuid: fileUuid,
         name: file.name,
         originalUrl: fileUrl,
+        storageKey,
         mimeType: file.type,
         size: file.size,
         type: fileType,
@@ -109,7 +123,7 @@ export async function POST(request: NextRequest) {
       success: true,
       file: {
         id: fileRecord.id,
-        url: fileUrl,
+        url: fileRecord.originalUrl,
         name: fileRecord.name,
         type: fileRecord.type,
       },
