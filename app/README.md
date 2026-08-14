@@ -142,286 +142,77 @@ npm run lint
 
 AGPL-3.0-or-later (same as original Monica)
 
-## API Endpoints
+## API
 
-This section documents the Next.js API Routes implemented for Monica CRM.
-
-### Base URL
-
-`/api/monica/v1`
+The app exposes a REST API under `/api/v1` (routes in `src/app/api/v1/*`),
+covering contacts, activities, calls, gifts, notes, reminders, tags, tasks,
+records, journals (with nested journal entries), and the current user.
 
 ### Authentication
 
-All API endpoints require Bearer Token authentication. Include the `Authorization` header with your API token:
+Requests require a Bearer API token:
 
 `Authorization: Bearer YOUR_API_TOKEN`
 
-The API token is set via the `MONICA_API_TOKEN` environment variable.
+Tokens are created in the app (Settings → API Tokens). They're stored hashed
+(the `ApiToken` model) and looked up on each request — see
+`src/lib/api/auth.ts`. Each token carries **ability scopes** (e.g. `read`,
+`write`, `delete`, or `*`); requests are rejected with `403` if the token
+lacks the ability a route requires.
 
-### Error Handling
+### Rate limiting
 
-API errors are returned in a consistent JSON format:
+Each token is rate-limited per minute (configurable via
+`API_RATE_LIMIT_PER_MINUTE`, default 120/min). Exceeding it returns `429` with
+`Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and
+`X-RateLimit-Reset` headers.
 
-```json
-{
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Error description",
-    "details": {
-      // Optional additional error details
-    }
-  }
-}
+### Idempotency
+
+Write requests (`POST`/`PUT`/`PATCH`/`DELETE`) may include an
+`Idempotency-Key` header. A repeated request with the same key and the same
+body replays the original response with an `Idempotent-Replay: true` header;
+the same key with a *different* body returns `409`.
+
+### Example
+
+```
+GET /api/v1/contacts
+Authorization: Bearer YOUR_API_TOKEN
 ```
 
-Possible `ERROR_CODE` values include:
-*   `UNAUTHORIZED`: Authentication failed.
-*   `NOT_FOUND`: Resource not found.
-*   `INVALID_INPUT`: Invalid request parameters or body.
-*   `METHOD_NOT_ALLOWED`: HTTP method not supported for the endpoint.
-*   `INTERNAL_SERVER_ERROR`: An unexpected server error occurred.
+### Full reference
 
-### Contacts
+The full endpoint and schema reference is an OpenAPI 3.1 spec, kept in sync
+with the implementation:
 
-#### List/Search Contacts
+- Served live at `GET /api/v1/openapi.json`
+- Source file: `docs/api/openapi.json`
 
-`GET /api/monica/v1/contacts`
+## Model Context Protocol (MCP)
 
-*   **Description:** Retrieves a list of contacts, optionally filtered by a search query.
-*   **Query Parameters:**
-    *   `query` (optional): A string to search for contacts by name or other attributes.
-*   **Response:** `200 OK` - An array of contact objects.
+Two ways to reach Monica CRM as an AI agent — details, config snippets, and
+comparison with the CLI are in
+[`docs/architecture/agent-access.md`](../docs/architecture/agent-access.md).
 
-#### Retrieve Contact
+- **MCP server (stdio)** — a spec-compliant MCP server built on
+  `@modelcontextprotocol/sdk`. Run it with `pnpm mcp` (or the `monica-mcp`
+  bin); auth is via a `MONICA_API_TOKEN` env var, scoping every tool call to
+  that token's abilities. See `src/mcp/monica-mcp.ts` and
+  `src/lib/mcp/server.ts`.
+- **Legacy HTTP endpoint** — `POST /api/mcp`, Bearer-authenticated, with a
+  custom (non-JSON-RPC) body shape:
 
-`GET /api/monica/v1/contacts/:id`
+  ```json
+  { "tool": "monica_create_contact", "arguments": { "first_name": "John" } }
+  ```
 
-*   **Description:** Retrieves a single contact by its ID.
-*   **Path Parameters:**
-    *   `id` (required): The ID of the contact.
-*   **Response:** `200 OK` - A contact object.
-*   **Error Codes:** `INVALID_INPUT` (if ID is not a number), `NOT_FOUND` (if contact does not exist).
+  returning `{ "result": ... }` on success. `GET /api/mcp` returns a tool
+  manifest. New integrations should prefer the stdio MCP server.
 
-#### Create Contact
+## CLI
 
-`POST /api/monica/v1/contacts`
-
-*   **Description:** Creates a new contact.
-*   **Request Body:** A JSON object representing the new contact's data. (Specific fields depend on Monica API).
-*   **Response:** `201 Created` - The newly created contact object.
-*   **Error Codes:** `INVALID_INPUT` (if required fields are missing or invalid).
-
-#### Update Contact
-
-`PUT /api/monica/v1/contacts/:id` (Full update)
-`PATCH /api/monica/v1/contacts/:id` (Partial update)
-
-*   **Description:** Updates an existing contact by its ID.
-*   **Path Parameters:**
-    *   `id` (required): The ID of the contact.
-*   **Request Body:** A JSON object with the updated contact data.
-*   **Response:** `200 OK` - The updated contact object.
-*   **Error Codes:** `INVALID_INPUT`, `NOT_FOUND`.
-
-#### Delete Contact
-
-`DELETE /api/monica/v1/contacts/:id`
-
-*   **Description:** Deletes a contact by its ID.
-*   **Path Parameters:**
-    *   `id` (required): The ID of the contact.
-*   **Response:** `204 No Content`
-*   **Error Codes:** `INVALID_INPUT`, `NOT_FOUND`.
-
-### Activities
-
-#### Log Activity
-
-`POST /api/monica/v1/activities`
-
-*   **Description:** Logs a new activity for a contact.
-*   **Request Body:**
-    *   `contact_id` (required): The ID of the contact.
-    *   `summary` (required): A summary of the activity.
-    *   `happened_at` (optional): Date and time of the activity (e.g., "YYYY-MM-DD HH:MM:SS").
-    *   `description` (optional): Detailed description of the activity.
-*   **Response:** `201 Created` - The newly logged activity object.
-*   **Error Codes:** `INVALID_INPUT`.
-
-### Notes
-
-#### Add Note
-
-`POST /api/monica/v1/notes`
-
-*   **Description:** Adds a new note to a contact.
-*   **Request Body:**
-    *   `contact_id` (required): The ID of the contact.
-    *   `body` (required): The content of the note.
-*   **Response:** `201 Created` - The newly created note object.
-*   **Error Codes:** `INVALID_INPUT`.
-
-### Contact Field Types
-
-#### List Contact Field Types
-
-`GET /api/monica/v1/contactfieldtypes`
-
-*   **Description:** Retrieves a list of available contact field types (e.g., phone, email, etc.).
-*   **Response:** `200 OK` - An array of contact field type objects.
-
-### Custom Contact Fields
-
-#### Add Custom Contact Field
-
-`POST /api/monica/v1/contacts/:id/fields`
-
-*   **Description:** Adds a custom field (e.g., email, phone, social media) to a contact.
-*   **Path Parameters:**
-    *   `id` (required): The ID of the contact.
-    *   `field_type` (required): The ID or identifier of the contact field type.
-    *   `value` (required): The value for the custom field.
-*   **Response:** `201 Created` - The newly created contact field object.
-*   **Error Codes:** `INVALID_INPUT`, `NOT_FOUND`.
-
-## Model Context Protocol (MCP) Integration
-
-This application exposes an MCP server endpoint, allowing AI agents to interact with Monica CRM functionalities using the Model Context Protocol.
-
-### Endpoint
-
-`GET /api/mcp`
-`POST /api/mcp`
-
-### Available MCP Actions (Tools)
-
-AI agents can interact with the following tools provided by this MCP adapter:
-
-*   **`monica_create_contact(contactData: object)`:** Creates a new contact in Monica CRM.
-*   **`monica_get_contact(contactId: number)`:** Retrieves a contact by ID.
-*   **`monica_search_contacts(query: string)`:** Searches for contacts by a query string.
-*   **`monica_update_contact(contactId: number, contactData: object)`:** Updates an existing contact by its ID.
-*   **`monica_delete_contact(contactId: number)`:** Deletes a contact by its ID.
-*   **`monica_log_activity(contactId: number, summary: string, happenedAt?: string, description?: string)`:** Logs a new activity for a contact.
-*   **`monica_add_note(contactId: number, body: string)`:** Adds a new note to a contact.
-*   **`monica_list_contact_field_types()`:** Lists available custom contact field types.
-*   **`monica_add_contact_field(contactId: number, fieldType: string, value: string)`:** Adds a custom field to a contact.
-*   **`monica_list_tasks(contactId?: number)`:** Retrieves a list of tasks, optionally filtered by contact ID.
-*   **`monica_get_task(taskId: number)`:** Retrieves a single task by its ID.
-*   **`monica_create_task(taskData: object)`:** Creates a new task.
-*   **`monica_update_task(taskId: number, taskData: object)`:** Updates an existing task by its ID.
-*   **`monica_delete_task(taskId: number)`:** Deletes a task by its ID.
-
-### Usage
-
-Agents should make `POST` requests to `/api/mcp` with an MCP-compliant JSON payload to invoke these actions. A `GET` request to `/api/mcp` will return the server's manifest, detailing the available tools and their schemas.
-
-**Example MCP Request (to create a contact):**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "1",
-  "method": "monica_create_contact",
-  "params": {
-    "contactData": {
-      "first_name": "John",
-      "last_name": "Doe",
-      "email": "john.doe@example.com"
-    }
-  }
-}
-```
-
-**Example MCP Response (success):**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "1",
-  "result": {
-    "id": 123,
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "john.doe@example.com",
-    "...": "..."
-  }
-}
-```
-
-**Example MCP Response (error):**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "1",
-  "error": {
-    "code": -32000,
-    "message": "MONICA_API_TOKEN is not set."
-  }
-}
-```
-
-
-
-#### Delete Contact
-
-`DELETE /api/monica/v1/contacts/:id`
-
-*   **Description:** Deletes a contact by its ID.
-*   **Path Parameters:**
-    *   `id` (required): The ID of the contact.
-*   **Response:** `204 No Content`
-*   **Error Codes:** `INVALID_INPUT`, `NOT_FOUND`.
-
-### Activities
-
-#### Log Activity
-
-`POST /api/monica/v1/activities`
-
-*   **Description:** Logs a new activity for a contact.
-*   **Request Body:**
-    *   `contact_id` (required): The ID of the contact.
-    *   `summary` (required): A summary of the activity.
-    *   `happened_at` (optional): Date and time of the activity (e.g., "YYYY-MM-DD HH:MM:SS").
-    *   `description` (optional): Detailed description of the activity.
-*   **Response:** `201 Created` - The newly logged activity object.
-*   **Error Codes:** `INVALID_INPUT`.
-
-### Notes
-
-#### Add Note
-
-`POST /api/monica/v1/notes`
-
-*   **Description:** Adds a new note to a contact.
-*   **Request Body:**
-    *   `contact_id` (required): The ID of the contact.
-    *   `body` (required): The content of the note.
-*   **Response:** `201 Created` - The newly created note object.
-*   **Error Codes:** `INVALID_INPUT`.
-
-### Contact Field Types
-
-#### List Contact Field Types
-
-`GET /api/monica/v1/contactfieldtypes`
-
-*   **Description:** Retrieves a list of available contact field types (e.g., phone, email, etc.).
-*   **Response:** `200 OK` - An array of contact field type objects.
-
-### Custom Contact Fields
-
-#### Add Custom Contact Field
-
-`POST /api/monica/v1/contacts/:id/fields`
-
-*   **Description:** Adds a custom field (e.g., email, phone, social media) to a contact.
-*   **Path Parameters:**
-    *   `id` (required): The ID of the contact.
-*   **Request Body:**
-    *   `field_type` (required): The ID or identifier of the contact field type.
-    *   `value` (required): The value for the custom field.
-*   **Response:** `201 Created` - The newly created contact field object.
-*   **Error Codes:** `INVALID_INPUT`, `NOT_FOUND`.
+Two CLIs live under `src/cli/`: `monica` (a REST API v1 client, `pnpm cli`)
+and the legacy direct-DB `monica-cli`. See
+[`docs/architecture/agent-access.md`](../docs/architecture/agent-access.md)
+for usage, auth, and verbs.
