@@ -8,7 +8,12 @@
 ## Current Priority: Product Polish & Quality
 
 ### Next Up
-- [ ] (nothing open) — all 21 GitHub issues closed
+- [ ] (nothing open) — all 24 GitHub issues closed
+
+### Done (agent-interface batch, #22-24)
+- [x] #23 Real MCP server — @modelcontextprotocol/sdk stdio (pnpm mcp / monica-mcp bin), tool core extracted to src/lib/mcp/, MONICA_API_TOKEN auth, verified end-to-end with a real MCP SDK client (initialize→tools/list→tools/call). Legacy {tool,arguments} HTTP route kept.
+- [x] #22 Full CLI — new `monica` REST-client (commander, noun-verb, full CRUD, --format json/table, --page-all NDJSON, exit codes, --dry-run, schema cmd from OpenAPI), reuses hardened API. Legacy direct-DB monica-cli kept. cli-coverage test vs openapi.json. Verified live.
+- [x] #24 README drift fixed — /api/monica/v1→/api/v1, removed phantom endpoints + JSON-RPC MCP examples, points to OpenAPI spec, documents real MCP/CLI
 
 ### Done (platform-hardening, cont.)
 - [x] #17 File/photo storage → MinIO (S3): src/lib/storage/s3.ts (AWS SDK v3), upload streams to bucket under vault/{id}/{type}/{uuid}-{name}, File.storageKey column, /api/files/{uuid} resolver 307→presigned (private bucket, S3_PUBLIC_ENDPOINT for browser reach). Verified live against ozubuntu bucket `monica` (canary + app upload→resolver→delete). Opus-reviewed, 4 risks fixed. Local .env holds creds (gitignored)
