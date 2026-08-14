@@ -5,7 +5,9 @@
 //
 // Standalone process: load DATABASE_URL / MONICA_API_TOKEN from .env since,
 // unlike the Next.js app, this entry point does not auto-load env files.
-import "dotenv/config";
+// quiet: true — dotenv's banner would otherwise corrupt the stdout JSON-RPC channel.
+import dotenv from "dotenv";
+dotenv.config({ quiet: true });
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { validateApiTokenValue } from "@/lib/api/auth";

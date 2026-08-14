@@ -10,7 +10,8 @@
     ]
   },
   "bin": {
-    "monica-mcp": "src/mcp/monica-mcp.ts"
+    "monica-mcp": "src/mcp/monica-mcp.ts",
+    "monica": "src/cli/monica.ts"
   },
   "scripts": {
     "dev": "next dev",
@@ -22,7 +23,8 @@
     "test:e2e": "playwright test",
     "test:e2e:local": "playwright test e2e/smoke.spec.ts --project=chromium",
     "lint:openapi": "npx --yes @redocly/cli@latest lint docs/api/openapi.json",
-    "mcp": "tsx src/mcp/monica-mcp.ts"
+    "mcp": "tsx src/mcp/monica-mcp.ts",
+    "cli": "tsx src/cli/monica.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -36,6 +38,7 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "commander": "^15.0.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",

@@ -4,7 +4,7 @@
 
 - **REST API v1** — current and supported now (OpenAPI spec at `/api/v1/openapi.json`)
 - **MCP** — real Model Context Protocol server, stdio transport (plus a legacy custom HTTP endpoint)
-- **CLI** — partial (direct-DB wrapper); full rebuild planned
+- **CLI** — REST API v1 client (`monica`), plus a legacy direct-DB local wrapper
 
 ## MCP server
 
@@ -35,6 +35,26 @@ Register with an MCP client, e.g.:
 A legacy HTTP endpoint at `POST /api/mcp` with a custom `{tool, arguments}`
 shape remains for back-compat; new integrations should use the MCP stdio
 server.
+
+## CLI
+
+Two CLIs live under `app/src/cli/`:
+
+- **`monica`** (`src/cli/monica.ts`, `pnpm cli`) — a REST API v1 client. Talks
+  to the API over HTTP with an API token, so it respects ability scoping,
+  audit, rate-limiting, and idempotency. Noun-verb: `monica <resource> <verb>`.
+  - Auth: `--token` or `MONICA_API_TOKEN`; base URL via `--url` or
+    `MONICA_API_URL` (default `http://localhost:4000`).
+  - Verbs: `list` / `get <id>` / `create --data '<json>'` /
+    `update <id> --data '<json>'` / `delete <id>` across contacts, activities,
+    calls, gifts, notes, reminders, tags, tasks, records, journals; `user get`.
+  - `--format json|table`, `--page-all` (NDJSON), `--dry-run`, `--yes`,
+    `schema <resource> [verb]`, `auth whoami`.
+  - Exit codes: 0 ok, 2 auth, 3 validation, 4 not-found, 5 server/network.
+  - stdout is JSON-only (prompts/status/errors go to stderr) so output pipes
+    cleanly.
+- **`monica-cli`** (`src/cli/monica-cli.ts`) — legacy direct-DB wrapper for
+  trusted local automation (no auth; needs `DATABASE_URL`).
 
 ## Current API
 
