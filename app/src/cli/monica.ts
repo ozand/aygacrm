@@ -9,7 +9,11 @@
 // ever talks to the API over HTTP (Bearer token auth), never to the database
 // directly.
 //
-// Run via `pnpm cli -- <args>` (tsx) or `pnpm exec tsx src/cli/monica.ts <args>`.
+// Run via `pnpm cli <args>` (tsx) or `pnpm exec tsx src/cli/monica.ts <args>`.
+// NOTE: do NOT insert a `--` separator (`pnpm cli -- <args>`). On pnpm 10 the
+// literal `--` is forwarded to tsx as an argv element, and commander then reads
+// it as its own end-of-options marker, so every following flag is misparsed
+// (e.g. `pnpm cli -- --help` fails with "unknown command '--help'").
 
 import dotenv from "dotenv";
 import { readFileSync } from "node:fs";
