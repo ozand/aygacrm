@@ -2,15 +2,15 @@
 
 ## Summary
 
-Build the first storage and ingestion interfaces for external relationship references and content. This epic establishes how Monica receives curated data from external agents and systems so the golden record and relationship memory can reflect real-world context without Monica owning native source integrations.
+Build the first storage and ingestion interfaces for external relationship references and content. This epic establishes how AygaCRM receives curated data from external agents and systems so the golden record and relationship memory can reflect real-world context without AygaCRM owning native source integrations.
 
 ## Problem
 
-Without a structured ingestion layer, Monica is only a manual CRM. The product’s core value depends on storing important relationship context from the channels where relationships actually happen. The system needs a repeatable external content/reference model and a small set of high-value sources to validate provenance, attribution, and duplicate handling in practice.
+Without a structured ingestion layer, AygaCRM is only a manual CRM. The product’s core value depends on storing important relationship context from the channels where relationships actually happen. The system needs a repeatable external content/reference model and a small set of high-value sources to validate provenance, attribution, and duplicate handling in practice.
 
 ## Outcome
 
-Monica can receive structured references, snippets, and transcripts from priority external systems. Ingested items create or update external identities where applicable, write provenance data, and enrich the canonical contact without losing source history.
+AygaCRM can receive structured references, snippets, and transcripts from priority external systems. Ingested items create or update external identities where applicable, write provenance data, and enrich the canonical contact without losing source history.
 
 ## Scope
 
@@ -18,7 +18,7 @@ Monica can receive structured references, snippets, and transcripts from priorit
 
 - Define a storage model for external references, snippets, and transcripts
 - Define a source-aware ingestion contract for API, CLI, and MCP writers
-- Standardize normalization logic so each source maps into Monica’s internal relationship context model
+- Standardize normalization logic so each source maps into AygaCRM’s internal relationship context model
 - Add validation, attribution, and retry behavior for ingestion failures
 - Support email as a source of curated contact context and references
 - Support Telegram as a source of curated contact context and references
@@ -31,7 +31,7 @@ Monica can receive structured references, snippets, and transcripts from priorit
 ### Out of scope
 
 - Native source authentication flows
-- Webhooks, polling jobs, or background sync runners as Monica-owned responsibilities
+- Webhooks, polling jobs, or background sync runners as AygaCRM-owned responsibilities
 - Two-way synchronization back to source systems
 - WhatsApp, VK, and Facebook source support for this epic
 - Indiscriminate full-content ingestion as the default behavior
@@ -56,7 +56,7 @@ Monica can receive structured references, snippets, and transcripts from priorit
 
 - [EPIC-0001: Core CRM Stabilization](./EPIC-0001-core-crm-stabilization.md)
 - [EPIC-0002: Golden Record Foundation](./EPIC-0002-golden-record-foundation.md)
-- [EPIC-0003: Agent Access Layer](./EPIC-0003-agent-access-layer.md) for connector services that need to write into Monica programmatically
+- [EPIC-0003: Agent Access Layer](./EPIC-0003-agent-access-layer.md) for connector services that need to write into AygaCRM programmatically
 
 ## Risks / open questions
 

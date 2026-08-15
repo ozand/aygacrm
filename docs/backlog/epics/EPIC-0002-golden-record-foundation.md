@@ -2,15 +2,15 @@
 
 ## Summary
 
-Design and implement the identity resolution and provenance model that turns Monica from a basic CRM into a golden record platform. This epic defines how canonical contacts relate to external identities and how Monica records the source of truth for each piece of data.
+Design and implement the identity resolution and provenance model that turns AygaCRM from a basic CRM into a golden record platform. This epic defines how canonical contacts relate to external identities and how AygaCRM records the source of truth for each piece of data.
 
 ## Problem
 
-Today, contacts are created manually and stored as isolated records with no formal concept of external identity, source attribution, or duplication management. As soon as Monica begins ingesting data from email, messaging, and professional networks, it needs a model that can link multiple external profiles to one canonical contact while preserving where each field came from. Without that foundation, imported data becomes difficult to trust, merge, or reverse.
+Today, contacts are created manually and stored as isolated records with no formal concept of external identity, source attribution, or duplication management. As soon as AygaCRM begins ingesting data from email, messaging, and professional networks, it needs a model that can link multiple external profiles to one canonical contact while preserving where each field came from. Without that foundation, imported data becomes difficult to trust, merge, or reverse.
 
 ## Outcome
 
-Monica can represent one person as a canonical contact with multiple linked external identities and a traceable history of how the record evolved. Users can review duplicate candidates, merge contacts with an audit trail, and reverse a merge if needed.
+AygaCRM can represent one person as a canonical contact with multiple linked external identities and a traceable history of how the record evolved. Users can review duplicate candidates, merge contacts with an audit trail, and reverse a merge if needed.
 
 ## Scope
 

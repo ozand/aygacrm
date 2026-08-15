@@ -1,8 +1,8 @@
-// Minimal fetch wrapper for the Monica REST API v1 client CLI.
+// Minimal fetch wrapper for the AygaCRM REST API v1 client CLI.
 //
 // apiRequest() always talks to `${url}/api/v1${path}`. Non-2xx responses throw
 // ApiClientError (carrying the HTTP status + parsed error body) so the command
-// layer in monica.ts can map it to a structured process exit code via
+// layer in aygacrm.ts can map it to a structured process exit code via
 // statusToExitCode().
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -78,7 +78,7 @@ function extractErrorMessage(json: unknown, fallback: string): string {
 }
 
 /**
- * Issues an HTTP request against the Monica REST API v1.
+ * Issues an HTTP request against the AygaCRM REST API v1.
  *
  * `path` is the resource path (e.g. "/contacts" or "/contacts/123"); the
  * `/api/v1` base path is prepended automatically. Non-2xx responses throw

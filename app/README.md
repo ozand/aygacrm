@@ -1,6 +1,6 @@
-# Monica - Personal Relationship Manager
+# AygaCRM - Personal Relationship Manager
 
-Modern rewrite of [Monica CRM](https://github.com/monicahq/monica) using Next.js 15, TypeScript, Prisma, and PostgreSQL.
+AygaCRM — a modern rewrite, originally based on [Monica CRM](https://github.com/monicahq/monica), using Next.js 15, TypeScript, Prisma, and PostgreSQL.
 
 ## Tech Stack
 
@@ -35,7 +35,7 @@ Modern rewrite of [Monica CRM](https://github.com/monicahq/monica) using Next.js
    
    Edit `.env` and set your database connection:
    ```
-   DATABASE_URL="postgresql://user:password@localhost:5432/monica"
+   DATABASE_URL="postgresql://user:password@localhost:5432/aygacrm"
    AUTH_SECRET="your-secret-key-minimum-32-characters"
    ```
 
@@ -106,7 +106,7 @@ src/
 
 ## Database Schema
 
-The Prisma schema includes all entities from the original Monica:
+The Prisma schema includes all entities from the original Monica CRM:
 
 - **Core:** Account, User, Vault
 - **Contacts:** Contact, Gender, Pronoun, Religion
@@ -140,7 +140,7 @@ npm run lint
 
 ## License
 
-AGPL-3.0-or-later (same as original Monica)
+AGPL-3.0-or-later (same as original Monica CRM)
 
 ## API
 
@@ -191,20 +191,20 @@ with the implementation:
 
 ## Model Context Protocol (MCP)
 
-Two ways to reach Monica CRM as an AI agent — details, config snippets, and
+Two ways to reach AygaCRM as an AI agent — details, config snippets, and
 comparison with the CLI are in
 [`docs/architecture/agent-access.md`](../docs/architecture/agent-access.md).
 
 - **MCP server (stdio)** — a spec-compliant MCP server built on
-  `@modelcontextprotocol/sdk`. Run it with `pnpm mcp` (or the `monica-mcp`
-  bin); auth is via a `MONICA_API_TOKEN` env var, scoping every tool call to
-  that token's abilities. See `src/mcp/monica-mcp.ts` and
+  `@modelcontextprotocol/sdk`. Run it with `pnpm mcp` (or the `aygacrm-mcp`
+  bin); auth is via a `AYGACRM_API_TOKEN` env var, scoping every tool call to
+  that token's abilities. See `src/mcp/aygacrm-mcp.ts` and
   `src/lib/mcp/server.ts`.
 - **Legacy HTTP endpoint** — `POST /api/mcp`, Bearer-authenticated, with a
   custom (non-JSON-RPC) body shape:
 
   ```json
-  { "tool": "monica_create_contact", "arguments": { "first_name": "John" } }
+  { "tool": "aygacrm_create_contact", "arguments": { "first_name": "John" } }
   ```
 
   returning `{ "result": ... }` on success. `GET /api/mcp` returns a tool
@@ -212,7 +212,7 @@ comparison with the CLI are in
 
 ## CLI
 
-Two CLIs live under `src/cli/`: `monica` (a REST API v1 client, `pnpm cli`)
-and the legacy direct-DB `monica-cli`. See
+Two CLIs live under `src/cli/`: `aygacrm` (a REST API v1 client, `pnpm cli`)
+and the legacy direct-DB `aygacrm-cli`. See
 [`docs/architecture/agent-access.md`](../docs/architecture/agent-access.md)
 for usage, auth, and verbs.

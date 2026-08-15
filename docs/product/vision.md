@@ -6,30 +6,30 @@ Relationship data fragments across email, chat apps, phones, social platforms, n
 
 ## Vision
 
-Monica is a relationship intelligence platform. Its job is to store curated external relationship context for each contact, preserve provenance, and make that context usable as relationship memory. Monica is the container for important content and references supplied by humans or agents, not a system that indiscriminately ingests everything from every source.
+AygaCRM is a relationship intelligence platform. Its job is to store curated external relationship context for each contact, preserve provenance, and make that context usable as relationship memory. AygaCRM is the container for important content and references supplied by humans or agents, not a system that indiscriminately ingests everything from every source.
 
-## What Monica is
+## What AygaCRM is
 
-Monica is the canonical contact hub inside a broader personal and company ecosystem. It stores contact identity, important relationship context, and curated communication memory, and it makes that information available for both humans and agents.
+AygaCRM is the canonical contact hub inside a broader personal and company ecosystem. It stores contact identity, important relationship context, and curated communication memory, and it makes that information available for both humans and agents.
 
-## What Monica is not
+## What AygaCRM is not
 
-Monica is not a task manager, not a knowledge base, and not a project management tool. It does not try to replace Todoist, Notion, or Obsidian/Logseq.
+AygaCRM is not a task manager, not a knowledge base, and not a project management tool. It does not try to replace Todoist, Notion, or Obsidian/Logseq.
 
 ## Ecosystem role
 
-Monica sits at the center of the contact layer while other tools keep their own jobs:
+AygaCRM sits at the center of the contact layer while other tools keep their own jobs:
 
 - **Todoist** — task management
 - **Notion** — workspace context
 - **Obsidian/Logseq** — personal knowledge base
 
-Monica links to those systems when needed, but it owns contact truth and relationship memory.
+AygaCRM links to those systems when needed, but it owns contact truth and relationship memory.
 
 ## Users
 
 - **Humans** use the UI to search contacts, review history, correct data, and manage relationships.
-- **Agents** use the API, CLI, or MCP to push structured references, content, and relationship updates into Monica.
+- **Agents** use the API, CLI, or MCP to push structured references, content, and relationship updates into AygaCRM.
 
 ## Core outcomes
 

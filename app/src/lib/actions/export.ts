@@ -177,7 +177,7 @@ export async function exportData(
       });
     }
 
-    const filename = `monica-export-${new Date().toISOString().split("T")[0]}.json`;
+    const filename = `aygacrm-export-${new Date().toISOString().split("T")[0]}.json`;
     return {
       data: JSON.stringify(exportData, null, 2),
       filename,
@@ -227,7 +227,7 @@ export async function exportData(
 
     const csvContent = [headers.join(","), ...rows.map((row) => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(","))].join("\n");
 
-    const filename = `monica-contacts-${new Date().toISOString().split("T")[0]}.csv`;
+    const filename = `aygacrm-contacts-${new Date().toISOString().split("T")[0]}.csv`;
     return {
       data: csvContent,
       filename,
@@ -291,7 +291,7 @@ export async function exportData(
       return vcard;
     });
 
-    const filename = `monica-contacts-${new Date().toISOString().split("T")[0]}.vcf`;
+    const filename = `aygacrm-contacts-${new Date().toISOString().split("T")[0]}.vcf`;
     return {
       data: vcards.join(""),
       filename,

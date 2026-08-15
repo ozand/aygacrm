@@ -4,7 +4,7 @@ These principles are non-negotiable. If a feature conflicts with them, the featu
 
 ## Provenance is mandatory
 
-Every field value must be traceable to a source and timestamp. If Monica cannot explain where a value came from, it should not present that value as trusted truth.
+Every field value must be traceable to a source and timestamp. If AygaCRM cannot explain where a value came from, it should not present that value as trusted truth.
 
 ## Human override wins
 
@@ -20,11 +20,11 @@ Manual edits must never be replaced by source data without an explicit rule or u
 
 ## Raw is immutable
 
-External events are append-only facts. Monica may transform, summarize, or merge them, but it should not mutate the original event history.
+External events are append-only facts. AygaCRM may transform, summarize, or merge them, but it should not mutate the original event history.
 
-## Monica owns contact truth
+## AygaCRM owns contact truth
 
-The canonical identity for a contact lives in Monica. Other systems can contribute data, but Monica is the place where contact truth is resolved.
+The canonical identity for a contact lives in AygaCRM. Other systems can contribute data, but AygaCRM is the place where contact truth is resolved.
 
 ## Product simplicity
 

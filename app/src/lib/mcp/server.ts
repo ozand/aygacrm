@@ -13,13 +13,13 @@ import {
   type RequestMetadata,
 } from "@/lib/mcp/tools";
 
-export function createMonicaMcpServer(
+export function createAygacrmMcpServer(
   auth: ApiAuthContext,
   meta: RequestMetadata
 ): Server {
   const server = new Server(
     {
-      name: "monica-crm",
+      name: "aygacrm",
       version: "1.0.0",
     },
     {

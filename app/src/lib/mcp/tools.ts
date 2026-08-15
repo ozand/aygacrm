@@ -235,7 +235,7 @@ export function defineTool<TArgs>(tool: ToolDefinition<TArgs>): ToolDefinition<T
 }
 
 export const toolDefinitions = {
-  monica_search_contacts: defineTool({
+  aygacrm_search_contacts: defineTool({
     description: "Search contacts by name or nickname in accessible vaults.",
     ability: "contacts:read",
     parameters: {
@@ -277,7 +277,7 @@ export const toolDefinitions = {
       return contacts;
     },
   }),
-  monica_get_contact: defineTool({
+  aygacrm_get_contact: defineTool({
     description: "Get a single contact with related details and counts.",
     ability: "contacts:read",
     parameters: {
@@ -337,7 +337,7 @@ export const toolDefinitions = {
       };
     },
   }),
-  monica_create_contact: defineTool({
+  aygacrm_create_contact: defineTool({
     description: "Create a new contact in an accessible vault.",
     ability: "contacts:write",
     parameters: {
@@ -388,7 +388,7 @@ export const toolDefinitions = {
       return contact;
     },
   }),
-  monica_update_contact: defineTool({
+  aygacrm_update_contact: defineTool({
     description: "Update basic fields for an existing contact.",
     ability: "contacts:write",
     parameters: {
@@ -436,7 +436,7 @@ export const toolDefinitions = {
       return updatedContact;
     },
   }),
-  monica_add_note: defineTool({
+  aygacrm_add_note: defineTool({
     description: "Attach a note to a contact.",
     ability: "notes:write",
     parameters: {
@@ -479,7 +479,7 @@ export const toolDefinitions = {
       return note;
     },
   }),
-  monica_log_activity: defineTool({
+  aygacrm_log_activity: defineTool({
     description: "Log an activity for a contact.",
     ability: "activities:write",
     parameters: {
@@ -524,7 +524,7 @@ export const toolDefinitions = {
       return activity;
     },
   }),
-  monica_list_tasks: defineTool({
+  aygacrm_list_tasks: defineTool({
     description: "List tasks scoped to accessible vaults.",
     ability: "tasks:read",
     parameters: {
@@ -575,7 +575,7 @@ export const toolDefinitions = {
       }));
     },
   }),
-  monica_create_task: defineTool({
+  aygacrm_create_task: defineTool({
     description: "Create a task for a contact.",
     ability: "tasks:write",
     parameters: {
@@ -636,7 +636,7 @@ export const toolDefinitions = {
       };
     },
   }),
-  monica_list_records: defineTool({
+  aygacrm_list_records: defineTool({
     description: "List external records for a contact.",
     ability: "notes:read",
     parameters: {
@@ -659,7 +659,7 @@ export const toolDefinitions = {
       return records;
     },
   }),
-  monica_add_record: defineTool({
+  aygacrm_add_record: defineTool({
     description:
       "Add an external record to a contact. Valid sources: " +
       SOURCES.join(", ") +
@@ -714,7 +714,7 @@ export const toolDefinitions = {
       return record;
     },
   }),
-  monica_update_task: defineTool({
+  aygacrm_update_task: defineTool({
     description: "Update task details and completion status.",
     ability: "tasks:write",
     parameters: {

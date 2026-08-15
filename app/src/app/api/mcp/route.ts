@@ -42,7 +42,7 @@ const requestSchema = z.object({
 
 export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
-    name: "monica-crm",
+    name: "aygacrm",
     version: "1.0.0",
     tools: listToolsMeta(),
   });

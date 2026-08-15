@@ -2,15 +2,15 @@
 
 ## Summary
 
-Harden the REST API and add CLI and MCP interfaces so agents can interact with Monica safely and predictably. This epic focuses on making Monica’s agent-facing surface documented, stable, and auditable.
+Harden the REST API and add CLI and MCP interfaces so agents can interact with AygaCRM safely and predictably. This epic focuses on making AygaCRM’s agent-facing surface documented, stable, and auditable.
 
 ## Problem
 
-Monica already has an API v1, but it is not yet treated as a contractual interface. It lacks complete documentation, stable error semantics, idempotency support, and the operational safeguards needed for autonomous or semi-autonomous agent use. There is also no CLI or MCP server, which makes scripted operations and LLM integrations unnecessarily brittle.
+AygaCRM already has an API v1, but it is not yet treated as a contractual interface. It lacks complete documentation, stable error semantics, idempotency support, and the operational safeguards needed for autonomous or semi-autonomous agent use. There is also no CLI or MCP server, which makes scripted operations and LLM integrations unnecessarily brittle.
 
 ## Outcome
 
-Monica exposes a reliable agent access layer:
+AygaCRM exposes a reliable agent access layer:
 
 - REST endpoints are documented and predictable
 - Write operations can be retried safely when idempotency keys are used
@@ -39,7 +39,7 @@ Monica exposes a reliable agent access layer:
 
 - GraphQL APIs
 - WebSocket or other real-time APIs
-- Multi-step orchestration or planning logic inside Monica
+- Multi-step orchestration or planning logic inside AygaCRM
 - Agent autonomy frameworks beyond the exposed tool surface
 
 ## Related docs

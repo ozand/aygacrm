@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Monica CLI — REST API v1 client (issue #22).
+// AygaCRM CLI — REST API v1 client (issue #22).
 //
 // Noun-verb interface over the API described in docs/api/openapi.json:
-//   monica <resource> <verb> [args] [flags]
+//   aygacrm <resource> <verb> [args] [flags]
 //
-// This is a *separate* entry point from src/cli/monica-cli.ts, which remains
+// This is a *separate* entry point from src/cli/aygacrm-cli.ts, which remains
 // the legacy direct-DB local-mode CLI and is not touched here. This CLI only
 // ever talks to the API over HTTP (Bearer token auth), never to the database
 // directly.
 //
-// Run via `pnpm cli <args>` (tsx) or `pnpm exec tsx src/cli/monica.ts <args>`.
+// Run via `pnpm cli <args>` (tsx) or `pnpm exec tsx src/cli/aygacrm.ts <args>`.
 // NOTE: do NOT insert a `--` separator (`pnpm cli -- <args>`). On pnpm 10 the
 // literal `--` is forwarded to tsx as an argv element, and commander then reads
 // it as its own end-of-options marker, so every following flag is misparsed
@@ -34,7 +34,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Standalone process (not the Next.js app): load .env explicitly so
-// MONICA_API_TOKEN / MONICA_API_URL can live there like the legacy CLI.
+// AYGACRM_API_TOKEN / AYGACRM_API_URL can live there like the legacy CLI.
 dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 
 const OPENAPI_PATH = path.resolve(__dirname, "../../docs/api/openapi.json");
@@ -63,7 +63,7 @@ export interface ResourceDef {
   verbs: Verb[];
   /** Schema names in docs/api/openapi.json#/components/schemas. */
   schemas: ResourceSchemaNames;
-  /** Short help text for `monica <name> --help`. */
+  /** Short help text for `aygacrm <name> --help`. */
   description: string;
   /**
    * True only for the singleton "user" resource: its "get" verb has no <id>
@@ -210,8 +210,8 @@ interface Globals {
 function resolveGlobals(cmd: Command): Globals {
   const opts = cmd.optsWithGlobals<{ token?: string; url?: string; format?: string }>();
 
-  const token = opts.token ?? process.env.MONICA_API_TOKEN;
-  const url = opts.url ?? process.env.MONICA_API_URL ?? "http://localhost:4000";
+  const token = opts.token ?? process.env.AYGACRM_API_TOKEN;
+  const url = opts.url ?? process.env.AYGACRM_API_URL ?? "http://localhost:4000";
   const format = opts.format ?? "json";
 
   if (format !== "json" && format !== "table") {
@@ -229,7 +229,7 @@ function requestOptions(globals: Globals, extra: Partial<ApiRequestOptions> = {}
 function requireToken(globals: Globals): asserts globals is Globals & { token: string } {
   if (!globals.token) {
     console.error(
-      "Missing API token. Provide --token <token> or set the MONICA_API_TOKEN environment variable."
+      "Missing API token. Provide --token <token> or set the AYGACRM_API_TOKEN environment variable."
     );
     process.exit(2);
   }
@@ -385,13 +385,13 @@ export function buildProgram(): Command {
   const program = new Command();
 
   program
-    .name("monica")
+    .name("aygacrm")
     .description(
-      "Monica CRM REST API v1 CLI client. Talks to MONICA_API_URL/api/v1 over Bearer auth.\n" +
-        "See `monica <resource> --help` for verbs, and `monica schema <resource>` for request/response shapes."
+      "AygaCRM REST API v1 CLI client. Talks to AYGACRM_API_URL/api/v1 over Bearer auth.\n" +
+        "See `aygacrm <resource> --help` for verbs, and `aygacrm schema <resource>` for request/response shapes."
     )
-    .option("--token <token>", "API bearer token (else env MONICA_API_TOKEN)")
-    .option("--url <url>", "API base URL (else env MONICA_API_URL, default http://localhost:4000)")
+    .option("--token <token>", "API bearer token (else env AYGACRM_API_TOKEN)")
+    .option("--url <url>", "API base URL (else env AYGACRM_API_URL, default http://localhost:4000)")
     .option("--format <format>", "output format: json|table", "json");
 
   for (const resource of RESOURCES) {

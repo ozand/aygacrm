@@ -1,4 +1,4 @@
-# Monica CRM — Project TODO
+# AygaCRM — Project TODO
 
 > Living tracker. Updated as work progresses.
 > See `docs/` for architecture, backlog, and product vision.
@@ -11,12 +11,12 @@
 - [ ] (nothing open) — all 24 GitHub issues closed
 
 ### Done (agent-interface batch, #22-24)
-- [x] #23 Real MCP server — @modelcontextprotocol/sdk stdio (pnpm mcp / monica-mcp bin), tool core extracted to src/lib/mcp/, MONICA_API_TOKEN auth, verified end-to-end with a real MCP SDK client (initialize→tools/list→tools/call). Legacy {tool,arguments} HTTP route kept.
-- [x] #22 Full CLI — new `monica` REST-client (commander, noun-verb, full CRUD, --format json/table, --page-all NDJSON, exit codes, --dry-run, schema cmd from OpenAPI), reuses hardened API. Legacy direct-DB monica-cli kept. cli-coverage test vs openapi.json. Verified live.
-- [x] #24 README drift fixed — /api/monica/v1→/api/v1, removed phantom endpoints + JSON-RPC MCP examples, points to OpenAPI spec, documents real MCP/CLI
+- [x] #23 Real MCP server — @modelcontextprotocol/sdk stdio (pnpm mcp / aygacrm-mcp bin), tool core extracted to src/lib/mcp/, AYGACRM_API_TOKEN auth, verified end-to-end with a real MCP SDK client (initialize→tools/list→tools/call). Legacy {tool,arguments} HTTP route kept.
+- [x] #22 Full CLI — new `aygacrm` REST-client (commander, noun-verb, full CRUD, --format json/table, --page-all NDJSON, exit codes, --dry-run, schema cmd from OpenAPI), reuses hardened API. Legacy direct-DB aygacrm-cli kept. cli-coverage test vs openapi.json. Verified live.
+- [x] #24 README drift fixed — /api/aygacrm/v1→/api/v1, removed phantom endpoints + JSON-RPC MCP examples, points to OpenAPI spec, documents real MCP/CLI
 
 ### Done (platform-hardening, cont.)
-- [x] #17 File/photo storage → MinIO (S3): src/lib/storage/s3.ts (AWS SDK v3), upload streams to bucket under vault/{id}/{type}/{uuid}-{name}, File.storageKey column, /api/files/{uuid} resolver 307→presigned (private bucket, S3_PUBLIC_ENDPOINT for browser reach). Verified live against ozubuntu bucket `monica` (canary + app upload→resolver→delete). Opus-reviewed, 4 risks fixed. Local .env holds creds (gitignored)
+- [x] #17 File/photo storage → MinIO (S3): src/lib/storage/s3.ts (AWS SDK v3), upload streams to bucket under vault/{id}/{type}/{uuid}-{name}, File.storageKey column, /api/files/{uuid} resolver 307→presigned (private bucket, S3_PUBLIC_ENDPOINT for browser reach). Verified live against ozubuntu bucket `aygacrm` (canary + app upload→resolver→delete). Opus-reviewed, 4 risks fixed. Local .env holds creds (gitignored)
 
 ### Done (platform-hardening batch, docs-gap issues #17-21)
 - [x] #21 Next.js middleware — edge-safe NextAuth split config (auth.config.ts), gates dashboard routes with callbackUrl return-to, bounces authed users off /login,/register
@@ -26,7 +26,7 @@
 
 ### Done
 - [x] #16 Reminder notification delivery — email (nodemailer/SMTP) + Telegram (Bot API), CRON_SECRET-protected /api/cron/reminders route, per-day dedup, failed-status + retry-on-next-run, 17 unit tests; verified live against a local SMTP catcher
-- [x] GitHub repo created (ozand/monica-crm, private) — 16 issues filed from full surf-CLI E2E diagnostic
+- [x] GitHub repo created (ozand/aygacrm, private) — 16 issues filed from full surf-CLI E2E diagnostic
 - [x] Issues #1-15 fixed and closed across 5 increments (commits caa2983..7155a06):
   - #1 SelectItem value="" crashes (10 spots, 8 files) — "none" sentinel + submit mapping
   - #2/#11 legacy SearchDialog deleted — single Ctrl+K palette, pluralization gone with it
@@ -85,11 +85,11 @@
 - [x] External records server actions (`external-records.ts`) — add, update, delete, list with vault ownership checks
 - [x] External records UI on contact detail page (`external-records-card.tsx`)
 - [x] CLI extended with `records list` and `records add`
-- [x] MCP extended with `monica_list_records` and `monica_add_record`
+- [x] MCP extended with `aygacrm_list_records` and `aygacrm_add_record`
 - [x] Docs updated for agent-driven ingestion architecture (vision, data model, integration roadmap, EPIC-0004)
-- [x] CLI wrapper (`app/src/cli/monica-cli.ts`) — 7 commands: contacts list/get/search, notes add, tasks list/create, status
+- [x] CLI wrapper (`app/src/cli/aygacrm-cli.ts`) — 7 commands: contacts list/get/search, notes add, tasks list/create, status
 - [x] Canonical field selection rules (`canonical-fields.ts`) — deterministic source priority, manual override wins, conflict detection
-- [x] Deleted stale root files: vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, storage.sqlite3, scripts/, utils/
+- [x] Deleted stale root files: vitest.config.ts, tsconfig.json, tests/, monicaApi.ts (legacy pre-rename filename), storage.sqlite3, scripts/, utils/
 - [x] Agent audit trail — 36 audit calls wired across 22 API/MCP route files
 - [x] Audit module refactored — constants/helpers split from "use server" for Next.js compatibility
 - [x] Root package.json cleaned — stale deps removed, root node_modules deleted
@@ -126,7 +126,7 @@
 - [x] Create root `.gitignore` and `.env.example`
 - [x] `next build` passes successfully (Turbopack, 0 errors)
 - [x] Initial git commit (baseline)
-- [x] Database setup — PostgreSQL `monica` DB, 75 tables via `prisma db push`
+- [x] Database setup — PostgreSQL `aygacrm` DB, 75 tables via `prisma db push`
 - [x] Dev server verified — `pnpm dev --hostname 127.0.0.1 --port 4000` starts successfully
 - [x] Reports page — 3 new reports (Important Dates, Activity Summary, Gifts & Loans)
 - [x] Created `report-stats.ts` server actions for vault-wide report aggregation
@@ -163,12 +163,12 @@
 - [x] CLI wrapper for common operations
 
 ### EPIC-0004: First Integrations
-- [x] Reframe EPIC-0004 around agent-driven ingestion instead of Monica-owned native connectors
+- [x] Reframe EPIC-0004 around agent-driven ingestion instead of AygaCRM-owned native connectors
 - [x] Add `ExternalRecord` model for curated external references, snippets, and transcripts
 - [x] Server actions for external records CRUD
 - [x] UI for external records on contact detail page
 - [x] CLI support for external records (`records list`, `records add`)
-- [x] MCP support for external records (`monica_list_records`, `monica_add_record`)
+- [x] MCP support for external records (`aygacrm_list_records`, `aygacrm_add_record`)
 - [x] Build verification — prisma generate/db push, tsc 0 errors, next build passes
 - [x] Ingestion conventions — standardized source/kind pairs, metadata schemas, validation rules
 - [x] API v1 `/api/v1/records` — full CRUD: GET (list + detail), POST, PUT, DELETE with validation + audit
@@ -182,10 +182,10 @@
 ## Tech Debt
 - [x] `app/api/mcp/route.ts` had `// @ts-nocheck` — replaced with properly typed route at `app/src/app/api/mcp/route.ts`
 - [x] `formData.get("label")` in tasks.ts — fixed to `formData.get("name")` to match Prisma field
-- [x] Legacy routes deleted: `app/api/monica/` (10 files)
+- [x] Legacy routes deleted: `app/api/monica/` (10 files, pre-rename path)
 - [x] Dual lockfiles resolved: root `package-lock.json` removed
 - [x] Root `package.json` cleaned — stale deps removed, node_modules deleted
-- [x] Root vitest.config.ts, tsconfig.json, tests/, monicaApi.ts, scripts/, utils/, storage.sqlite3 — all deleted
+- [x] Root vitest.config.ts, tsconfig.json, tests/, monicaApi.ts (legacy pre-rename filename), scripts/, utils/, storage.sqlite3 — all deleted
 - [x] Test infrastructure added — Vitest 4.1.2, 116 tests, 9 suites (ingestion-conventions, canonical-fields, duplicates, api-records-validation, dashboard, search, merge, provenance, external-identities)
 - [x] CI/CD pipeline — GitHub Actions workflow with PostgreSQL, tsc, tests, build
 
@@ -197,7 +197,7 @@
 - Stack: Next.js 16.1.6, React 19.2.3, Prisma 7.3.0, NextAuth 5 beta
 - 79 Prisma models (75 core + 4 golden record), 2 enums
 - Detailed docs: `docs/product/`, `docs/architecture/`, `docs/backlog/`
-- CLI: `pnpm exec tsx src/cli/monica-cli.ts <command>` from `app/` (direct DB, no auth)
+- CLI: `pnpm exec tsx src/cli/aygacrm-cli.ts <command>` from `app/` (direct DB, no auth)
 - Dev server: `pnpm dev --hostname 127.0.0.1 --port 4000` (port 3000 blocked by Windows EACCES)
-- Database: PostgreSQL 18.1 local, `monica` DB, 79 tables
-- `.env` in `app/` — `DATABASE_URL=postgresql://postgres@localhost:5432/monica`
+- Database: PostgreSQL 18.1 local, `aygacrm` DB, 79 tables
+- `.env` in `app/` — `DATABASE_URL=postgresql://postgres@localhost:5432/aygacrm`

@@ -1,12 +1,12 @@
 /**
  * Ingestion Conventions — standardized source/kind pairs and payload schemas
- * for external record ingestion into Monica CRM.
+ * for external record ingestion into AygaCRM.
  *
- * All agents (CLI, MCP, API) pushing data into Monica MUST use these
+ * All agents (CLI, MCP, API) pushing data into AygaCRM MUST use these
  * conventions. Free-form source/kind values are rejected at validation time.
  *
- * Design principle: Monica is the storage/display layer. Agents curate and
- * push data in; Monica validates structure but does not fetch externally.
+ * Design principle: AygaCRM is the storage/display layer. Agents curate and
+ * push data in; AygaCRM validates structure but does not fetch externally.
  */
 
 import { z } from "zod";

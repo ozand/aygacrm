@@ -2,7 +2,7 @@
 
 ## Overview
 
-External records in Monica follow standardized **source/kind** pairs with optional typed metadata. All ingestion — whether via API, MCP, CLI, or UI — validates against these conventions.
+External records in AygaCRM follow standardized **source/kind** pairs with optional typed metadata. All ingestion — whether via API, MCP, CLI, or UI — validates against these conventions.
 
 Source of truth: `app/src/lib/ingestion-conventions.ts`
 
@@ -162,7 +162,7 @@ External records can be created through 4 channels:
 ### 1. API v1 — `POST /api/v1/records`
 
 ```bash
-curl -X POST https://monica.example/api/v1/records \
+curl -X POST https://aygacrm.example/api/v1/records \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -183,11 +183,11 @@ curl -X POST https://monica.example/api/v1/records \
 
 Response: `201 Created` with the created record.
 
-### 2. MCP — `monica_add_record`
+### 2. MCP — `aygacrm_add_record`
 
 ```json
 {
-  "tool": "monica_add_record",
+  "tool": "aygacrm_add_record",
   "arguments": {
     "contactId": "uuid",
     "source": "email",
@@ -207,7 +207,7 @@ Response: `201 Created` with the created record.
 ### 3. CLI — `records add`
 
 ```bash
-pnpm exec tsx src/cli/monica-cli.ts records add <contactId> \
+pnpm exec tsx src/cli/aygacrm-cli.ts records add <contactId> \
   --source todoist \
   --kind task \
   --title "Follow up on proposal" \
@@ -241,8 +241,8 @@ The recommended pattern for agent-driven ingestion:
 
 1. Agent connects to source (email inbox, Telegram API, etc.)
 2. Agent extracts relevant content and normalizes it
-3. Agent looks up or creates the contact in Monica (via API/MCP)
+3. Agent looks up or creates the contact in AygaCRM (via API/MCP)
 4. Agent writes one or more `ExternalRecord` entries with proper source/kind/metadata
-5. Monica stores the curated reference with provenance
+5. AygaCRM stores the curated reference with provenance
 
-Monica is the **storage and display layer**. Agents own source authentication, data extraction, and normalization. Monica defines the contract; agents fulfill it.
+AygaCRM is the **storage and display layer**. Agents own source authentication, data extraction, and normalization. AygaCRM defines the contract; agents fulfill it.

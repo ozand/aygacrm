@@ -194,7 +194,7 @@ export function ImportManager() {
           Import Data
         </CardTitle>
         <CardDescription>
-          Import data from a Monica JSON export file. This will add new data to your account.
+          Import data from an AygaCRM JSON export file. This will add new data to your account.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

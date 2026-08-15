@@ -1,4 +1,4 @@
-# Monica CRM Migration Plan
+# AygaCRM Migration Plan
 ## Laravel → Next.js 16 + Prisma 7
 
 ---

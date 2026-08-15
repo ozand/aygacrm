@@ -1,4 +1,4 @@
-// Output formatting for the Monica CLI: pretty JSON, an aligned-column table,
+// Output formatting for the AygaCRM CLI: pretty JSON, an aligned-column table,
 // and an NDJSON line printer used by `--page-all`.
 
 export type OutputFormat = "json" | "table";

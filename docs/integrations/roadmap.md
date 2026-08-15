@@ -19,13 +19,13 @@
 
 ## Integration pattern
 
-Each source-aware ingestion adapter should follow the same basic path: source capture agent → normalization → Monica write.
+Each source-aware ingestion adapter should follow the same basic path: source capture agent → normalization → AygaCRM write.
 
-The adapter or external agent is responsible for collecting data from the source. Normalization turns source-specific content into Monica’s internal shape. Monica then stores the curated reference, content, and provenance against the canonical contact.
+The adapter or external agent is responsible for collecting data from the source. Normalization turns source-specific content into AygaCRM’s internal shape. AygaCRM then stores the curated reference, content, and provenance against the canonical contact.
 
 ## Direction
 
-These are ingestion contracts, not native OAuth/webhook/polling connectors. Monica should define the storage and write interfaces; external systems should handle source authentication, data collection, and source-specific extraction.
+These are ingestion contracts, not native OAuth/webhook/polling connectors. AygaCRM should define the storage and write interfaces; external systems should handle source authentication, data collection, and source-specific extraction.
 
 ## Ingestion conventions
 

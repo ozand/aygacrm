@@ -2,7 +2,7 @@
 
 ## Stack
 
-Monica runs on Next.js 16, React 19, Prisma 7, PostgreSQL, and NextAuth 5 beta. The current implementation uses `@prisma/adapter-pg` for database access.
+AygaCRM runs on Next.js 16, React 19, Prisma 7, PostgreSQL, and NextAuth 5 beta. The current implementation uses `@prisma/adapter-pg` for database access.
 
 ## Subsystems
 

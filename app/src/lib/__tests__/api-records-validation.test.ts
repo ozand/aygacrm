@@ -155,7 +155,7 @@ describe("API v1 records validation", () => {
         { source: "telegram", metadata: { chatId: "chat_1", messageId: 42 } },
         { source: "linkedin", metadata: { profileUrl: "https://www.linkedin.com/in/john-doe" } },
         { source: "todoist", metadata: { priority: 2, labels: ["crm"] } },
-        { source: "notion", metadata: { pageId: "pg_1", workspaceName: "Monica" } },
+        { source: "notion", metadata: { pageId: "pg_1", workspaceName: "AygaCRM" } },
         { source: "zoom", metadata: { recordingUrl: "https://zoom.us/rec/xyz", duration: 30 } },
         { source: "phone", metadata: { direction: "outbound", duration: 120 } },
         { source: "whatsapp", metadata: { phoneNumber: "+12025550123", direction: "inbound" } },

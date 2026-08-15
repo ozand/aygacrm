@@ -137,7 +137,7 @@ export function ExportManager() {
 
       if (format === "vcard") {
         fileContent = await exportContactsToVCard();
-        filename = "monica-contacts.vcf";
+        filename = "aygacrm-contacts.vcf";
         mimeType = "text/vcard";
       } else {
         const result = await exportData(exportOptions);

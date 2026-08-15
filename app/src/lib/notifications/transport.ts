@@ -14,7 +14,7 @@ export async function sendEmail(
   if (!url) {
     return { ok: false, error: "SMTP_URL is not configured" };
   }
-  const from = process.env.SMTP_FROM || "Monica CRM <no-reply@localhost>";
+  const from = process.env.SMTP_FROM || "AygaCRM <no-reply@localhost>";
 
   try {
     const transport = nodemailer.createTransport(url);

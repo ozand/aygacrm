@@ -1,6 +1,6 @@
-# Monica CRM Documentation
+# AygaCRM Documentation
 
-Monica CRM is a rewrite of the Monica relationship app on Next.js 16, React 19, Prisma 7, and PostgreSQL. This codebase is building a relationship intelligence platform whose job is to maintain a canonical contact hub: a golden record for each person, with communication memory, provenance, and integration data from external systems.
+AygaCRM is a rewrite of the Monica relationship app on Next.js 16, React 19, Prisma 7, and PostgreSQL. This codebase is building a relationship intelligence platform whose job is to maintain a canonical contact hub: a golden record for each person, with communication memory, provenance, and integration data from external systems.
 
 ## Documentation map
 

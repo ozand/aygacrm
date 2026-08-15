@@ -219,7 +219,7 @@ export async function sendTestNotification(
     const result = await sendToChannel(
       channel,
       "Test Notification",
-      "This is a test notification from Monica CRM."
+      "This is a test notification from AygaCRM."
     );
 
     // Record the sent notification
@@ -227,7 +227,7 @@ export async function sendTestNotification(
       data: {
         channelId: channel.id,
         subject: "Test Notification",
-        body: "This is a test notification from Monica CRM.",
+        body: "This is a test notification from AygaCRM.",
         status: result.ok ? "sent" : "failed",
         error: result.error ?? null,
       },

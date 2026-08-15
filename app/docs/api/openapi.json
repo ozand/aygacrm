@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Monica CRM API",
+    "title": "AygaCRM API",
     "version": "1.0.0",
-    "description": "REST API v1 for Monica CRM. All endpoints require a Bearer API token. Fields use snake_case. Token abilities (e.g. `contacts:read`) gate each operation; a token holding `*` is granted every ability.",
+    "description": "REST API v1 for AygaCRM. All endpoints require a Bearer API token. Fields use snake_case. Token abilities (e.g. `contacts:read`) gate each operation; a token holding `*` is granted every ability.",
     "license": {
       "name": "AGPL-3.0-or-later",
       "url": "https://www.gnu.org/licenses/agpl-3.0.html"

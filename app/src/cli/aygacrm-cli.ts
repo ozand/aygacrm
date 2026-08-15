@@ -141,7 +141,7 @@ async function resolveContactId(vaultId: string, inputId: string): Promise<strin
 }
 
 function printUsage(): void {
-  console.log("Monica CLI");
+  console.log("AygaCRM CLI");
   console.log("");
   console.log("Usage:");
   console.log("  contacts list [--query <search>] [--limit <n>]");

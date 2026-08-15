@@ -4,7 +4,7 @@
 
 - **REST API v1** — current and supported now (OpenAPI spec at `/api/v1/openapi.json`)
 - **MCP** — real Model Context Protocol server, stdio transport (plus a legacy custom HTTP endpoint)
-- **CLI** — REST API v1 client (`monica`), plus a legacy direct-DB local wrapper
+- **CLI** — REST API v1 client (`aygacrm`), plus a legacy direct-DB local wrapper
 
 ## MCP server
 
@@ -12,8 +12,8 @@ A spec-compliant MCP server is available over stdio for clients like Claude
 Code / Claude Desktop. It reuses the same tools, ability scoping, and audit
 logging as the API.
 
-- Entry point: `pnpm mcp` (or the `monica-mcp` bin) from `app/`.
-- Auth: set `MONICA_API_TOKEN` (an API token) in the environment; the server
+- Entry point: `pnpm mcp` (or the `aygacrm-mcp` bin) from `app/`.
+- Auth: set `AYGACRM_API_TOKEN` (an API token) in the environment; the server
   validates it and scopes every tool call to that token's abilities.
 - Needs `DATABASE_URL` in the environment (loaded from `.env`).
 
@@ -22,11 +22,11 @@ Register with an MCP client, e.g.:
 ```json
 {
   "mcpServers": {
-    "monica": {
+    "aygacrm": {
       "command": "pnpm",
-      "args": ["exec", "tsx", "src/mcp/monica-mcp.ts"],
-      "cwd": "/path/to/monica/app",
-      "env": { "MONICA_API_TOKEN": "<your-token>" }
+      "args": ["exec", "tsx", "src/mcp/aygacrm-mcp.ts"],
+      "cwd": "/path/to/aygacrm/app",
+      "env": { "AYGACRM_API_TOKEN": "<your-token>" }
     }
   }
 }
@@ -40,11 +40,11 @@ server.
 
 Two CLIs live under `app/src/cli/`:
 
-- **`monica`** (`src/cli/monica.ts`, `pnpm cli`) — a REST API v1 client. Talks
+- **`aygacrm`** (`src/cli/aygacrm.ts`, `pnpm cli`) — a REST API v1 client. Talks
   to the API over HTTP with an API token, so it respects ability scoping,
-  audit, rate-limiting, and idempotency. Noun-verb: `monica <resource> <verb>`.
-  - Auth: `--token` or `MONICA_API_TOKEN`; base URL via `--url` or
-    `MONICA_API_URL` (default `http://localhost:4000`).
+  audit, rate-limiting, and idempotency. Noun-verb: `aygacrm <resource> <verb>`.
+  - Auth: `--token` or `AYGACRM_API_TOKEN`; base URL via `--url` or
+    `AYGACRM_API_URL` (default `http://localhost:4000`).
   - Verbs: `list` / `get <id>` / `create --data '<json>'` /
     `update <id> --data '<json>'` / `delete <id>` across contacts, activities,
     calls, gifts, notes, reminders, tags, tasks, records, journals; `user get`.
@@ -53,7 +53,7 @@ Two CLIs live under `app/src/cli/`:
   - Exit codes: 0 ok, 2 auth, 3 validation, 4 not-found, 5 server/network.
   - stdout is JSON-only (prompts/status/errors go to stderr) so output pipes
     cleanly.
-- **`monica-cli`** (`src/cli/monica-cli.ts`) — legacy direct-DB wrapper for
+- **`aygacrm-cli`** (`src/cli/aygacrm-cli.ts`) — legacy direct-DB wrapper for
   trusted local automation (no auth; needs `DATABASE_URL`).
 
 ## Current API

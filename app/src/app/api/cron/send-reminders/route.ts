@@ -125,7 +125,7 @@ This is a reminder that ${reminderInfo.contactName}'s ${reminderInfo.eventLabel}
 Don't forget to reach out!
 
 Best,
-Monica CRM
+AygaCRM
 `.trim();
 }
 

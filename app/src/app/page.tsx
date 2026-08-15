@@ -14,7 +14,7 @@ export default async function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-950">
       <main className="flex flex-col items-center justify-center px-4 text-center">
         <h1 className="text-5xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl">
-          Monica
+          AygaCRM
         </h1>
         <p className="mt-4 text-xl text-gray-600 dark:text-gray-400 max-w-2xl">
           Personal Relationship Manager. Keep track of your relationships, 

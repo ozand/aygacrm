@@ -17,7 +17,7 @@ The `ContactFieldProvenance` model tracks source attribution for individual fiel
 
 ## External content references
 
-The `ExternalRecord` model is the generic container for external relationship content and references. It stores links, short snippets, transcripts, and other curated artifacts with source, kind, optional external ID, optional URL, optional content, and happened-at time. This lets Monica preserve important context from systems like email, Telegram, LinkedIn, Zoom, phone calls, Todoist, and Notion without treating Monica as the raw source-of-truth system for those platforms.
+The `ExternalRecord` model is the generic container for external relationship content and references. It stores links, short snippets, transcripts, and other curated artifacts with source, kind, optional external ID, optional URL, optional content, and happened-at time. This lets AygaCRM preserve important context from systems like email, Telegram, LinkedIn, Zoom, phone calls, Todoist, and Notion without treating AygaCRM as the raw source-of-truth system for those platforms.
 
 ## Golden record concept
 

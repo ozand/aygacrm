@@ -10,8 +10,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Monica - Personal Relationship Manager",
-    template: "%s | Monica",
+    default: "AygaCRM - Personal Relationship Manager",
+    template: "%s | AygaCRM",
   },
   description: "Keep track of your relationships, remember birthdays, and never forget the important things.",
   keywords: ["CRM", "personal", "relationships", "contacts", "journal"],

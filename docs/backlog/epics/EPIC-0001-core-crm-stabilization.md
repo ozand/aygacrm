@@ -2,11 +2,11 @@
 
 ## Summary
 
-Stabilize the existing Monica CRM codebase so it compiles, builds, and runs reliably in local development and CI. This epic establishes the technical baseline required before new product work can safely continue.
+Stabilize the existing AygaCRM CRM codebase so it compiles, builds, and runs reliably in local development and CI. This epic establishes the technical baseline required before new product work can safely continue.
 
 ## Problem
 
-The current codebase has accumulated schema/code drift, missing package and configuration assumptions, and server/client boundary issues that make the application fragile. The production build currently fails at runtime because database-dependent routes attempt to pre-render without `DATABASE_URL`. There is also no basic CI/CD gate to prevent regressions. Before adding new capabilities, Monica needs a stable foundation that developers can run locally and that can be validated automatically.
+The current codebase has accumulated schema/code drift, missing package and configuration assumptions, and server/client boundary issues that make the application fragile. The production build currently fails at runtime because database-dependent routes attempt to pre-render without `DATABASE_URL`. There is also no basic CI/CD gate to prevent regressions. Before adding new capabilities, AygaCRM needs a stable foundation that developers can run locally and that can be validated automatically.
 
 ## Outcome
 
