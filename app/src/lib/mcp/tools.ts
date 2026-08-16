@@ -13,6 +13,7 @@ import {
   KINDS,
 } from "@/lib/ingestion-conventions";
 import { upsertExternalRecord } from "@/lib/external-record-upsert";
+import { ingestExternalItem, IngestValidationError, IngestConflictError } from "@/lib/ingest/ingest";
 
 export interface RequestMetadata {
   ipAddress: string | null;
@@ -199,6 +200,30 @@ const addRecordSchema = z
       path: ["kind"],
     }
   );
+
+const ingestSchema = z
+  .object({
+    source: sourceSchema,
+    kind: kindSchema,
+    handle: z.string().min(1),
+    externalId: z.string().min(1).optional(),
+    url: z.string().url().optional(),
+    title: z.string().min(1).optional(),
+    content: z.string().min(1).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+    happenedAt: isoDatetimeSchema.optional(),
+    contactHints: z
+      .object({
+        firstName: z.string().min(1).optional(),
+        lastName: z.string().min(1).optional(),
+        username: z.string().min(1).optional(),
+      })
+      .optional(),
+  })
+  .refine((value) => isValidSourceKind(value.source, value.kind), {
+    message: "Invalid source/kind combination",
+    path: ["kind"],
+  });
 
 const updateTaskSchema = z
   .object({
@@ -711,6 +736,83 @@ export const toolDefinitions = {
       });
 
       return { ...record, created };
+    },
+  }),
+  aygacrm_ingest: defineTool({
+    description:
+      "Resolve-or-create a contact from a source handle, idempotently ingest an external record for it, " +
+      "and record provenance for any contact fields the source supplied. One call replacing the " +
+      "find-or-create-contact -> add-identity -> add-record sequence. Valid sources: " +
+      SOURCES.join(", ") +
+      ". Valid kinds: " +
+      KINDS.join(", ") +
+      ". Not all source/kind combinations are valid.",
+    ability: "contacts:write",
+    parameters: {
+      type: "object",
+      properties: {
+        source: { type: "string", enum: [...SOURCES] },
+        kind: { type: "string", enum: [...KINDS] },
+        handle: {
+          type: "string",
+          description: "The source identity (maps to ExternalIdentity.externalId).",
+        },
+        externalId: {
+          type: "string",
+          description: "Optional record-level external id (e.g. a message id), independent of `handle`.",
+        },
+        url: { type: "string", format: "uri" },
+        title: { type: "string" },
+        content: { type: "string" },
+        metadata: { type: "object" },
+        happenedAt: { type: "string", format: "date-time" },
+        contactHints: {
+          type: "object",
+          properties: {
+            firstName: { type: "string" },
+            lastName: { type: "string" },
+            username: { type: "string" },
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["source", "kind", "handle"],
+      additionalProperties: false,
+    },
+    schema: ingestSchema,
+    execute: async (auth, args) => {
+      try {
+        return await ingestExternalItem(
+          { userId: auth.userId },
+          {
+            source: args.source,
+            kind: args.kind,
+            handle: args.handle,
+            externalId: args.externalId ?? null,
+            url: args.url ?? null,
+            title: args.title ?? null,
+            content: args.content ?? null,
+            metadata: args.metadata ?? null,
+            happenedAt: args.happenedAt ?? null,
+            contactHints: args.contactHints
+              ? {
+                  firstName: args.contactHints.firstName,
+                  lastName: args.contactHints.lastName,
+                  nickname: args.contactHints.username,
+                }
+              : undefined,
+          },
+          { setBy: auth.tokenId }
+        );
+      } catch (error) {
+        if (error instanceof IngestValidationError) {
+          throw new ToolError(error.message, "VALIDATION_ERROR", 400);
+        }
+        if (error instanceof IngestConflictError) {
+          throw new ToolError(error.message, "VALIDATION_ERROR", 409);
+        }
+        throw error;
+      }
     },
   }),
   aygacrm_update_task: defineTool({

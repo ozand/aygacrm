@@ -2857,6 +2857,78 @@
         },
         "operationId": "getUser"
       }
+    },
+    "/ingest": {
+      "post": {
+        "tags": [
+          "Records"
+        ],
+        "summary": "Ingest an external item",
+        "description": "Requires ability `contacts:write`. Resolves-or-creates a contact from a source handle (matched against `ExternalIdentity.externalId` for the given `source`), idempotently writes the external record via the same dedup rule as `POST /records` (keyed on contact/source/external_id), and records provenance for any contact fields supplied in `contact_hints`. One call replacing the find-or-create-contact -> add-identity -> add-record sequence. `source`/`kind` must be a valid combination.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Idempotent re-ingest: the external record already existed and was updated in place.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEnvelope"
+                }
+              }
+            },
+            "headers": {
+              "Idempotent-Replay": {
+                "$ref": "#/components/headers/IdempotentReplay"
+              }
+            }
+          },
+          "201": {
+            "description": "A new external record was created (contact may have been created or matched an existing one).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEnvelope"
+                }
+              }
+            },
+            "headers": {
+              "Idempotent-Replay": {
+                "$ref": "#/components/headers/IdempotentReplay"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/IdempotencyConflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "operationId": "ingestExternalItem"
+      }
     }
   },
   "components": {
@@ -4880,6 +4952,140 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "IngestContactHints": {
+        "type": "object",
+        "description": "Canonical contact fields the source supplied. Any field present is written to the resolved contact's provenance history, attributed to `source`.",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "last_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Nickname/username hint; also used as a display-name fallback."
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestCreate": {
+        "type": "object",
+        "required": [
+          "source",
+          "kind",
+          "handle"
+        ],
+        "description": "`source`/`kind` must form a valid combination. `handle` is the source identity used to resolve-or-create the contact (matched against `ExternalIdentity.externalId`); `external_id`, if present, is a separate record-level id (e.g. a message id) used for record dedup, independent of `handle`.",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "email",
+              "telegram",
+              "linkedin",
+              "todoist",
+              "notion",
+              "zoom",
+              "phone",
+              "whatsapp",
+              "manual",
+              "other"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "message",
+              "thread",
+              "profile",
+              "note",
+              "transcript",
+              "task",
+              "page",
+              "meeting",
+              "reference",
+              "snippet"
+            ]
+          },
+          "handle": {
+            "type": "string",
+            "minLength": 1
+          },
+          "external_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "happened_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "contact_hints": {
+            "$ref": "#/components/schemas/IngestContactHints"
+          }
+        }
+      },
+      "IngestResult": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "string"
+          },
+          "record_id": {
+            "type": "string"
+          },
+          "contact_created": {
+            "type": "boolean",
+            "description": "True if a new contact was created; false if an existing contact matched the handle."
+          },
+          "record_created": {
+            "type": "boolean",
+            "description": "True if a new external record was inserted; false if an existing one was updated in place."
+          }
+        }
+      },
+      "IngestEnvelope": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IngestResult"
           }
         }
       }

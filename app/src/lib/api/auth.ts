@@ -72,6 +72,7 @@ export const API_ERRORS = {
   UNAUTHORIZED: { code: 42, message: "Unauthorized. Please provide a valid API token." },
   FORBIDDEN: { code: 43, message: "You don't have permission to access this resource." },
   IDEMPOTENCY_CONFLICT: { code: 44, message: "Idempotency-Key was reused with a different request." },
+  IDENTITY_CONFLICT: { code: 45, message: "This external identity is already registered." },
   INTERNAL_ERROR: { code: 50, message: "An internal error occurred." },
 } as const;
 
