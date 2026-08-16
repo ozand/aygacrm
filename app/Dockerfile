@@ -46,24 +46,23 @@ RUN pnpm exec prisma generate
 # -----------------------------------------------------------------------
 FROM base AS builder
 
-# Safe placeholder values so `next build` never needs a live database or a
-# real secret. src/lib/db.ts wraps PrismaClient in a lazy proxy that only
-# reads DATABASE_URL when a request actually touches the DB — never at
-# build/import time — so these are only a defensive fallback in case a
-# route or auth config eagerly reads an env var during the build.
-ARG DATABASE_URL="postgresql://user:password@localhost:5432/aygacrm?schema=public"
-ARG AUTH_SECRET="build-time-placeholder-secret-not-for-runtime"
-ARG AUTH_URL="http://localhost:4000"
-ARG NEXT_PUBLIC_APP_URL="http://localhost:4000"
-ENV DATABASE_URL=${DATABASE_URL} \
-    AUTH_SECRET=${AUTH_SECRET} \
-    AUTH_URL=${AUTH_URL} \
-    NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
-    NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm build
+
+# Placeholder env for `next build` only — passed INLINE on this RUN so nothing
+# is persisted in an image layer or ARG/ENV metadata (avoids the Docker
+# SecretsUsedInArgOrEnv smell; these are throwaway non-secrets anyway).
+# src/lib/db.ts wraps PrismaClient in a lazy proxy that only reads DATABASE_URL
+# on first DB access — never at build/import time — so these values are just a
+# defensive fallback in case a route or the auth config eagerly reads an env
+# var during the build. None of them reach the runtime image.
+RUN DATABASE_URL="postgresql://user:password@localhost:5432/aygacrm?schema=public" \
+    AUTH_SECRET="build-time-placeholder-not-a-real-secret" \
+    AUTH_URL="http://localhost:4000" \
+    NEXT_PUBLIC_APP_URL="http://localhost:4000" \
+    pnpm build
 
 # -----------------------------------------------------------------------
 # runner: minimal runtime image
