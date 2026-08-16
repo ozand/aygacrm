@@ -3,7 +3,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { ApiAuthContext, hasAbility } from "@/lib/api/auth";
+import { ApiAuthContext, hasAbility } from "@/lib/api/token";
 import {
   ToolError,
   executeToolByName,

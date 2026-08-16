@@ -216,3 +216,27 @@ Two CLIs live under `src/cli/`: `aygacrm` (a REST API v1 client, `pnpm cli`)
 and the legacy direct-DB `aygacrm-cli`. See
 [`docs/architecture/agent-access.md`](../docs/architecture/agent-access.md)
 for usage, auth, and verbs.
+
+### Host install (no `tsx`, no source checkout of the toolchain)
+
+For running `aygacrm` / `aygacrm-mcp` on a host that only has Node.js (no
+`tsx`/TypeScript dev toolchain needed at runtime), build the two entry points
+to plain JS once with [tsup](https://tsup.egoist.dev/):
+
+```bash
+pnpm build:cli          # bundles src/cli/aygacrm.ts and src/mcp/aygacrm-mcp.ts
+                         # to dist/aygacrm.mjs and dist/aygacrm-mcp.mjs
+node dist/aygacrm.mjs --help
+node dist/aygacrm-mcp.mjs
+```
+
+The `bin` entries in `package.json` point at these built files, so `npm i -g`
+(or `pnpm link`) from `app/` after building exposes `aygacrm` / `aygacrm-mcp`
+as plain-Node executables — no `tsx` required. Runtime dependencies
+(`commander`, `dotenv`, `@modelcontextprotocol/sdk`, `@prisma/client`, `next`,
+`zod`, ...) still need `node_modules` installed as usual; only the
+TypeScript-to-JS step is replaced by the prebuilt `dist/` output.
+
+For day-to-day development, `pnpm cli <args>` and `pnpm mcp` (via `tsx`)
+remain the faster inner-loop path and don't require a rebuild after every
+change.

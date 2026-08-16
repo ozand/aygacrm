@@ -16,7 +16,7 @@
 // (e.g. `pnpm cli -- --help` fails with "unknown command '--help'").
 
 import dotenv from "dotenv";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -33,11 +33,25 @@ import { formatNdjsonLine, formatOutput, type OutputFormat } from "./lib/format"
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Resolve a path relative to the `app/` root regardless of whether this file
+// is running as source (src/cli/aygacrm.ts, two directories below app/,
+// e.g. via `pnpm cli` / tsx) or as the tsup-built bundle (dist/aygacrm.mjs,
+// one directory below app/, e.g. via the installed `aygacrm` bin). Tries both
+// nesting depths and picks whichever resolves to a real file, so no
+// environment detection or build-time copy step is needed.
+function resolveFromAppRoot(...segments: string[]): string {
+  const candidates = [
+    path.resolve(__dirname, "..", "..", ...segments), // src/cli/aygacrm.ts -> app/
+    path.resolve(__dirname, "..", ...segments), // dist/aygacrm.mjs -> app/
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+}
+
 // Standalone process (not the Next.js app): load .env explicitly so
 // AYGACRM_API_TOKEN / AYGACRM_API_URL can live there like the legacy CLI.
-dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
+dotenv.config({ path: resolveFromAppRoot(".env"), quiet: true });
 
-const OPENAPI_PATH = path.resolve(__dirname, "../../docs/api/openapi.json");
+const OPENAPI_PATH = resolveFromAppRoot("docs", "api", "openapi.json");
 
 // ---------------------------------------------------------------------------
 // Resource table

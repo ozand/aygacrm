@@ -36,6 +36,36 @@ A legacy HTTP endpoint at `POST /api/mcp` with a custom `{tool, arguments}`
 shape remains for back-compat; new integrations should use the MCP stdio
 server.
 
+### Host install (plain Node, no `tsx`/source checkout)
+
+`pnpm mcp` (via `tsx`) is the dev-loop path. For a host that should run the
+server without a TypeScript toolchain, build it once with tsup and run the
+bundled `.mjs` output under plain `node`:
+
+```bash
+cd app
+pnpm build:cli                    # -> dist/aygacrm-mcp.mjs, dist/aygacrm.mjs
+node dist/aygacrm-mcp.mjs         # or the installed `aygacrm-mcp` bin
+```
+
+`bin.aygacrm-mcp` in `app/package.json` points at `dist/aygacrm-mcp.mjs`, so
+`npm i -g` (or `pnpm link`) after building exposes `aygacrm-mcp` as a normal
+executable:
+
+```json
+{
+  "mcpServers": {
+    "aygacrm": {
+      "command": "aygacrm-mcp",
+      "env": { "AYGACRM_API_TOKEN": "<your-token>" }
+    }
+  }
+}
+```
+
+`node_modules` still needs the runtime dependencies installed (they are not
+bundled into `dist/`) — only the `tsx`/TypeScript compile step is replaced.
+
 ## CLI
 
 Two CLIs live under `app/src/cli/`:
@@ -43,6 +73,9 @@ Two CLIs live under `app/src/cli/`:
 - **`aygacrm`** (`src/cli/aygacrm.ts`, `pnpm cli`) — a REST API v1 client. Talks
   to the API over HTTP with an API token, so it respects ability scoping,
   audit, rate-limiting, and idempotency. Noun-verb: `aygacrm <resource> <verb>`.
+  For a plain-Node install (no `tsx`), run `pnpm build:cli` once and use
+  `dist/aygacrm.mjs` / the `aygacrm` bin instead — see the host-install note
+  under the MCP section above (same tsup build covers both entry points).
   - Auth: `--token` or `AYGACRM_API_TOKEN`; base URL via `--url` or
     `AYGACRM_API_URL` (default `http://localhost:4000`).
   - Verbs: `list` / `get <id>` / `create --data '<json>'` /

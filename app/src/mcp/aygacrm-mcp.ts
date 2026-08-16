@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 dotenv.config({ quiet: true });
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { validateApiTokenValue } from "@/lib/api/auth";
+import { validateApiTokenValue } from "@/lib/api/token";
 import { createAygacrmMcpServer } from "@/lib/mcp/server";
 import type { RequestMetadata } from "@/lib/mcp/tools";
 
