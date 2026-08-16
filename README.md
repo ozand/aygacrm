@@ -76,6 +76,8 @@ Runtime dependencies (full inventory: [`docs/architecture/dependencies.md`](docs
 - **MinIO** (S3-compatible object storage) — files/avatars, private bucket + presigned URLs. Bundled; swappable for AWS S3.
 - **SMTP** — outbound reminder email. Optional, not bundled (set `SMTP_URL`).
 
+All persistent state (database + uploaded files) lives in **host bind-mounts** under `${DATA_DIR:-./data}`, so it survives container removal, updates, and even `docker compose down -v` — losing data requires deleting the directory itself. Backup/restore tooling: [`scripts/backup.sh`](scripts/backup.sh) + [`docs/deployment/backup.md`](docs/deployment/backup.md).
+
 Deployment details and the published image (`ghcr.io/ozand/aygacrm`): [`docs/deployment/docker.md`](docs/deployment/docker.md).
 
 ### Local-first by design

@@ -56,3 +56,7 @@ app/playwright-report/
 
 # Telegram ingestion adapter offset checkpoint (src/ingest/telegram/)
 app/.telegram-offset.json
+
+# Docker persistent data (host bind-mounts) and backups — never commit
+/data/
+/backups/

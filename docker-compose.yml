@@ -36,7 +36,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-aygacrm}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aygacrm}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Host bind-mount (NOT a named volume) — see the DATA DURABILITY note at
+      # the bottom of this file. Data lives on the host under ${DATA_DIR}, so it
+      # survives container removal, image updates, `docker compose down`, AND
+      # `docker compose down -v` / `docker volume prune`.
+      - ${DATA_DIR:-./data}/postgres:/var/lib/postgresql/data
     healthcheck:
       test:
         [
@@ -55,7 +59,8 @@ services:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-aygacrm}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-aygacrm-object-secret}
     volumes:
-      - minio_data:/data
+      # Host bind-mount — same durability guarantee as postgres above.
+      - ${DATA_DIR:-./data}/minio:/data
     ports:
       - "9000:9000" # S3 API
       - "9001:9001" # MinIO web console
@@ -118,6 +123,23 @@ services:
     ports:
       - "4000:4000"
 
-volumes:
-  postgres_data:
-  minio_data:
+# ---------------------------------------------------------------------------
+# DATA DURABILITY (read before touching this file)
+#
+# ALL persistent state lives on the HOST under ${DATA_DIR:-./data}:
+#   ${DATA_DIR}/postgres  -> the database
+#   ${DATA_DIR}/minio     -> uploaded files / avatars
+#
+# These are host bind-mounts on purpose, NOT Docker named volumes. That makes
+# data survival independent of the container lifecycle and of human error:
+#   - `docker compose down`         keeps data
+#   - `docker compose down -v`      keeps data (bind-mounts ignore -v)
+#   - `docker volume prune`         keeps data (nothing to prune)
+#   - image update / rebuild / rm   keeps data
+# The only way to lose data is deleting the ${DATA_DIR} directory itself.
+#
+# Point DATA_DIR at a dedicated disk/path in production (e.g.
+# DATA_DIR=/srv/aygacrm/data in your .env). Back it up with scripts/backup.sh
+# (pg_dump + MinIO mirror) — see docs/deployment/backup.md. There are
+# intentionally NO named-volume declarations here.
+# ---------------------------------------------------------------------------

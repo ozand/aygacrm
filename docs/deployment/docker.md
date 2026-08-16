@@ -73,6 +73,15 @@ you need files. Full inventory:
 See `app/.env.example` for every optional integration (OAuth, SMTP, Telegram,
 CLI/adapter tokens) — none of those are required for the app to start.
 
+## Data persistence & backups
+
+All persistent state lives in **host bind-mounts** under `${DATA_DIR:-./data}`
+(`${DATA_DIR}/postgres`, `${DATA_DIR}/minio`) — not Docker named volumes — so it
+survives `docker compose down -v`, `docker volume prune`, image updates, and
+container removal. Point `DATA_DIR` at a dedicated disk in production. Backup and
+restore are covered in full in [`backup.md`](backup.md)
+(`scripts/backup.sh` / `scripts/restore.sh`).
+
 ## What the container does on startup
 
 `app/docker-entrypoint.sh` runs on every container start, before the
