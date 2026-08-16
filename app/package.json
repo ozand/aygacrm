@@ -29,6 +29,7 @@
     "lint:openapi": "npx --yes @redocly/cli@latest lint docs/api/openapi.json",
     "mcp": "tsx src/mcp/aygacrm-mcp.ts",
     "cli": "tsx src/cli/aygacrm.ts",
+    "ingest:telegram": "tsx src/ingest/telegram/run.ts",
     "build:cli": "tsup",
     "prepack": "pnpm build:cli"
   },

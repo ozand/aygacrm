@@ -36,3 +36,7 @@ Source of truth: `app/src/lib/ingestion-conventions.ts`
 ## Documentation rule
 
 Each integration gets its own implementation doc when work starts. Until then, this roadmap is the source of priority order and expected direction.
+
+## Implemented adapters
+
+- **Telegram** — external ingestion adapter, see [`telegram.md`](telegram.md).

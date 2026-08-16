@@ -53,3 +53,6 @@ nul
 # Playwright artifacts
 app/test-results/
 app/playwright-report/
+
+# Telegram ingestion adapter offset checkpoint (src/ingest/telegram/)
+app/.telegram-offset.json
