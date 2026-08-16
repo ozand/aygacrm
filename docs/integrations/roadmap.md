@@ -37,6 +37,14 @@ Source of truth: `app/src/lib/ingestion-conventions.ts`
 
 Each integration gets its own implementation doc when work starts. Until then, this roadmap is the source of priority order and expected direction.
 
+## Planned collectors
+
+- **Google Workspace** (Contacts + Gmail) — external collector via
+  [`googleworkspace/cli`](https://github.com/googleworkspace/cli); design in
+  [`google-workspace.md`](google-workspace.md). One-way import only; per
+  [ADR 0001](../architecture/adr/0001-local-first-golden-record-external-collectors.md)
+  golden records are never written back to Google.
+
 ## Implemented adapters
 
 - **Telegram** — external ingestion adapter, see [`telegram.md`](telegram.md).

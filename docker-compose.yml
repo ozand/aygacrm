@@ -6,16 +6,26 @@
 # `prisma db push` on every start, so the schema is created/synced
 # automatically — no manual migration step.
 #
-# All values below have safe local defaults. To override without editing
-# this file, create a `.env` next to this file (already gitignored) with
-# any of: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, AUTH_SECRET,
-# AUTH_URL, NEXT_PUBLIC_APP_URL. Docker Compose loads that `.env`
-# automatically for the ${VAR:-default} substitutions here — no extra
-# `env_file:` wiring needed.
+# Bundled infrastructure (everything AygaCRM needs to run is in this file):
+#   - postgres : the canonical datastore (contacts, golden records, provenance)
+#   - minio    : S3-compatible object storage for files/avatars
+#   - minio-init : one-shot job that creates the bucket before the app starts
+#   - app      : the AygaCRM web server + API
 #
-# AUTH_SECRET default below is NOT safe for a real deployment — set a real
-# random secret (e.g. `openssl rand -base64 32`) via `.env` before exposing
-# this beyond your own machine.
+# SMTP (outbound reminder email) is intentionally NOT bundled — it is an
+# optional external service. Set SMTP_URL to enable it; leave it unset and
+# email delivery is simply skipped.
+#
+# All values below have safe local defaults. To override without editing
+# this file, create a `.env` next to this file (already gitignored) with any
+# of: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, S3_BUCKET,
+# S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, AUTH_SECRET, AUTH_URL,
+# NEXT_PUBLIC_APP_URL, SMTP_URL. Docker Compose loads that `.env`
+# automatically for the ${VAR:-default} substitutions here.
+#
+# The AUTH_SECRET and MinIO credential defaults below are NOT safe for a real
+# deployment — set real random values (e.g. `openssl rand -base64 32`) via
+# `.env` before exposing this beyond your own machine.
 
 services:
   postgres:
@@ -37,6 +47,46 @@ services:
       timeout: 5s
       retries: 10
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-aygacrm}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-aygacrm-object-secret}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # MinIO web console
+    healthcheck:
+      test:
+        ["CMD-SHELL", "mc ready local >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: wait for MinIO, then create the bucket the app expects. Exits 0
+  # once the bucket exists (idempotent). The app depends on this completing so
+  # it never starts against a missing bucket.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-aygacrm}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-aygacrm-object-secret}
+      S3_BUCKET: ${S3_BUCKET:-aygacrm}
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\"; do
+        echo 'waiting for minio...'; sleep 2;
+      done;
+      mc mb --ignore-existing local/\"$$S3_BUCKET\";
+      echo \"bucket $$S3_BUCKET ready\";
+      "
+
   app:
     build:
       context: ./app
@@ -45,13 +95,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-aygacrm}:${POSTGRES_PASSWORD:-aygacrm}@postgres:5432/${POSTGRES_DB:-aygacrm}?schema=public
+      # Object storage (MinIO). S3_ENDPOINT is the in-cluster address the app
+      # uses; S3_PUBLIC_ENDPOINT is what the browser uses for presigned GET
+      # URLs (must be reachable from the user's machine).
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
+      S3_BUCKET: ${S3_BUCKET:-aygacrm}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-aygacrm}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-aygacrm-object-secret}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_FORCE_PATH_STYLE: "1"
       AUTH_SECRET: ${AUTH_SECRET:-change-me-to-a-random-secret-before-going-live}
       AUTH_URL: ${AUTH_URL:-http://localhost:4000}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:4000}
+      # Optional outbound email — unset means delivery is skipped.
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_FROM: ${SMTP_FROM:-AygaCRM <noreply@localhost>}
     ports:
       - "4000:4000"
 
 volumes:
   postgres_data:
+  minio_data:

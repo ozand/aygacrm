@@ -1,8 +1,8 @@
 # Docker deployment
 
-AygaCRM ships as a single web image plus a PostgreSQL database. This is the
-turnkey path to a running instance — no manual migration step, no separate
-build tooling on the host.
+AygaCRM ships as a single web image plus its infrastructure — PostgreSQL and
+MinIO (S3-compatible object storage). This is the turnkey path to a running
+instance — no manual migration step, no separate build tooling on the host.
 
 ## Quick start (local / single host)
 
@@ -12,8 +12,10 @@ From the repo root:
 docker compose up -d
 ```
 
-This starts a `postgres:16` container and the `app` container (built from
-`app/Dockerfile`), then serves AygaCRM at **http://localhost:4000**.
+This starts `postgres:16`, `minio` (with a one-shot `minio-init` job that
+creates the bucket), and the `app` container (built from `app/Dockerfile`),
+then serves AygaCRM at **http://localhost:4000**. The MinIO web console is at
+**http://localhost:9001** and its S3 API at **http://localhost:9000**.
 
 To override defaults (DB credentials, auth secret, public URL), create a
 `.env` file next to `docker-compose.yml` (already gitignored) — Compose
@@ -57,9 +59,19 @@ docker run -d \
 | `AUTH_URL` | Public base URL NextAuth uses for callbacks, e.g. `https://your-domain.example`. |
 | `NEXT_PUBLIC_APP_URL` | Public base URL the frontend uses to build absolute links. |
 
-See `app/.env.example` for the full list of optional integrations (OAuth,
-S3-compatible storage, SMTP, Telegram, etc.) — none of those are required
-for the app to start.
+### Object storage (files/avatars)
+
+The bundled compose stack wires the app to MinIO automatically (`S3_ENDPOINT`,
+`S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`,
+`S3_FORCE_PATH_STYLE`, and `S3_PUBLIC_ENDPOINT` for browser-facing presigned
+URLs). Object storage is **required for the files/avatars feature** but the
+rest of the app runs without it. When running the published image standalone
+(the `docker run` above), add the `S3_*` vars pointed at your own MinIO/S3 if
+you need files. Full inventory:
+[`docs/architecture/dependencies.md`](../architecture/dependencies.md).
+
+See `app/.env.example` for every optional integration (OAuth, SMTP, Telegram,
+CLI/adapter tokens) — none of those are required for the app to start.
 
 ## What the container does on startup
 

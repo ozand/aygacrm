@@ -58,7 +58,29 @@ Start here: [`AGENTS.md`](AGENTS.md) is the full bootstrap runbook. Detailed tas
 
 AygaCRM covers: **contacts** (identity, dates, relationships), **activities**, **calls**, **notes**, **reminders**, **tasks**, **gifts**, **journals**, **tags**, and **external records** (curated references from email/Telegram/LinkedIn/etc. attached to a contact with provenance). Contacts can be merged into a single golden record without losing history.
 
-For local development setup (Prisma, PostgreSQL, `npm run dev`, project structure) see [`app/README.md`](app/README.md). For architecture, product scope, and the agent-access strategy, see [`docs/`](docs/) — start with [`docs/architecture/agent-access.md`](docs/architecture/agent-access.md). Deployment via Docker: [`docs/deployment/docker.md`](docs/deployment/docker.md).
+For local development setup (Prisma, PostgreSQL, `npm run dev`, project structure) see [`app/README.md`](app/README.md). For architecture, product scope, and the agent-access strategy, see [`docs/`](docs/) — start with [`docs/architecture/agent-access.md`](docs/architecture/agent-access.md).
+
+---
+
+## Running it & dependencies
+
+Everything AygaCRM needs to run is bundled — one command brings up the whole stack:
+
+```bash
+docker compose up -d      # app + PostgreSQL + MinIO, on http://localhost:4000
+```
+
+Runtime dependencies (full inventory: [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md)):
+
+- **PostgreSQL** — canonical datastore. **Required.** Bundled.
+- **MinIO** (S3-compatible object storage) — files/avatars, private bucket + presigned URLs. Bundled; swappable for AWS S3.
+- **SMTP** — outbound reminder email. Optional, not bundled (set `SMTP_URL`).
+
+Deployment details and the published image (`ghcr.io/ozand/aygacrm`): [`docs/deployment/docker.md`](docs/deployment/docker.md).
+
+### Local-first by design
+
+AygaCRM's job is the **golden record** — aggregate contacts from every system (social, chats, LinkedIn, email…), deduplicate and merge them by signal or by hand, with provenance. Data only ever flows **in**: external **collector agents** authenticate to sources themselves and push via the ingestion contract; the product holds no third-party SDKs or credentials and **never exports golden records back** to Google or any big-tech source. See [ADR 0001](docs/architecture/adr/0001-local-first-golden-record-external-collectors.md). Google Workspace is reached exactly this way — an external collector, not a plugin: [`docs/integrations/google-workspace.md`](docs/integrations/google-workspace.md).
 
 ---
 
