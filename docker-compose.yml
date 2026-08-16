@@ -1,0 +1,57 @@
+# Turnkey local/single-host stack for AygaCRM.
+#
+#   docker compose up -d
+#
+# Then open http://localhost:4000. The app container runs
+# `prisma db push` on every start, so the schema is created/synced
+# automatically — no manual migration step.
+#
+# All values below have safe local defaults. To override without editing
+# this file, create a `.env` next to this file (already gitignored) with
+# any of: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, AUTH_SECRET,
+# AUTH_URL, NEXT_PUBLIC_APP_URL. Docker Compose loads that `.env`
+# automatically for the ${VAR:-default} substitutions here — no extra
+# `env_file:` wiring needed.
+#
+# AUTH_SECRET default below is NOT safe for a real deployment — set a real
+# random secret (e.g. `openssl rand -base64 32`) via `.env` before exposing
+# this beyond your own machine.
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aygacrm}
+      POSTGRES_USER: ${POSTGRES_USER:-aygacrm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aygacrm}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-aygacrm} -d ${POSTGRES_DB:-aygacrm}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aygacrm}:${POSTGRES_PASSWORD:-aygacrm}@postgres:5432/${POSTGRES_DB:-aygacrm}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-change-me-to-a-random-secret-before-going-live}
+      AUTH_URL: ${AUTH_URL:-http://localhost:4000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:4000}
+    ports:
+      - "4000:4000"
+
+volumes:
+  postgres_data:

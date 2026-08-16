@@ -15,6 +15,8 @@ AygaCRM is a rewrite of the Monica relationship app on Next.js 16, React 19, Pri
   - [Agent access](./architecture/agent-access.md)
 - Integrations
   - [Roadmap](./integrations/roadmap.md)
+- Deployment
+  - [Docker](./deployment/docker.md)
 - Process
   - [Definition of Ready](./process/definition-of-ready.md)
   - [Definition of Done](./process/definition-of-done.md)
