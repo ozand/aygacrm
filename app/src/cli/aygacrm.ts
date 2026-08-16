@@ -40,9 +40,14 @@ const __dirname = path.dirname(__filename);
 // nesting depths and picks whichever resolves to a real file, so no
 // environment detection or build-time copy step is needed.
 function resolveFromAppRoot(...segments: string[]): string {
+  // Order matters: the built bundle (dist/, one level below app/) must prefer
+  // its own "../" -> app/ over "../../" -> repo root, so a stray repo-root
+  // .env/docs never shadows the app's. Source mode (src/cli/, two levels below
+  // app/) finds nothing at "../" -> src/ and correctly falls through to
+  // "../../" -> app/.
   const candidates = [
-    path.resolve(__dirname, "..", "..", ...segments), // src/cli/aygacrm.ts -> app/
     path.resolve(__dirname, "..", ...segments), // dist/aygacrm.mjs -> app/
+    path.resolve(__dirname, "..", "..", ...segments), // src/cli/aygacrm.ts -> app/
   ];
   return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
 }

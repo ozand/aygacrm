@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { ApiAuthContext } from "@/lib/api/auth";
+import type { ApiAuthContext } from "@/lib/api/token";
 import { AUDIT_ACTIONS } from "@/lib/api/audit-constants";
 import { createAuditLogFromApi } from "@/lib/api/audit-helpers";
 import {

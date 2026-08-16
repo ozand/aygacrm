@@ -13,6 +13,10 @@
     "aygacrm-mcp": "dist/aygacrm-mcp.mjs",
     "aygacrm": "dist/aygacrm.mjs"
   },
+  "files": [
+    "dist",
+    "docs/api/openapi.json"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
