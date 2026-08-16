@@ -140,7 +140,12 @@ npm run lint
 
 ## License
 
-AGPL-3.0-or-later (same as original Monica CRM)
+**AGPL-3.0-or-later** — the same license as the original
+[Monica CRM](https://github.com/monicahq/monica), which AygaCRM is a
+**derivative work of**. Copyleft is inherited: AygaCRM cannot be relicensed
+under more permissive terms. See [`LICENSE.md`](../LICENSE.md) for the full
+text and [`NOTICE.md`](../NOTICE.md) for attribution and the list of
+modifications (AGPL §5) and the network-use requirement (AGPL §13).
 
 ## API
 

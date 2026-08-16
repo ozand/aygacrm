@@ -13,6 +13,7 @@ import {
   FileText,
   Tags,
   FolderOpen,
+  Github,
 } from "lucide-react";
 import { GlobalSearch } from "@/components/features/global-search";
 
@@ -79,6 +80,20 @@ export function Sidebar() {
               </li>
             </ul>
           </nav>
+          {/*
+            AGPL-3.0 §13: this is network-accessible software, so users
+            interacting with it over a network must be offered its source.
+            Derivative of Monica (github.com/monicahq/monica), AGPL-3.0-or-later.
+          */}
+          <a
+            href="https://github.com/ozand/aygacrm"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-x-2 text-xs text-gray-400 hover:text-primary"
+          >
+            <Github className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Source code · AGPL-3.0
+          </a>
         </div>
       </div>
     </>

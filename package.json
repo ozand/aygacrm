@@ -2,5 +2,6 @@
   "name": "aygacrm",
   "private": true,
   "description": "AygaCRM — Personal Relationship Intelligence Platform",
+  "license": "AGPL-3.0-or-later",
   "workspaces": []
 }
