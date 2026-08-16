@@ -124,7 +124,11 @@ export function ExternalRecordsCard({ contactId, existingRecords }: ExternalReco
 
       const data = result.data as ExternalRecordItem;
       if (data?.id) {
-        setRecords((prev) => [data, ...prev]);
+        setRecords((prev) =>
+          result.created === false
+            ? prev.map((record) => (record.id === data.id ? data : record))
+            : [data, ...prev]
+        );
       }
 
       setSource("other");

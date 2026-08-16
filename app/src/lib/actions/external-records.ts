@@ -10,11 +10,14 @@ import {
   type Source,
   type Kind,
 } from "@/lib/ingestion-conventions";
+import { upsertExternalRecord } from "@/lib/external-record-upsert";
 
 export interface ActionResult {
   success: boolean;
   error?: string;
   data?: unknown;
+  /** true when addExternalRecord inserted a new row, false when it updated an existing one (idempotent re-push). */
+  created?: boolean;
 }
 
 async function getUserVault() {
@@ -138,22 +141,20 @@ export async function addExternalRecord(formData: FormData): Promise<ActionResul
       return { success: false, error: "Invalid happened at date" };
     }
 
-    const record = await db.externalRecord.create({
-      data: {
-        contactId,
-        source,
-        kind,
-        externalId,
-        url,
-        title,
-        content,
-        happenedAt,
-      },
+    const { record, created } = await upsertExternalRecord(db, {
+      contactId,
+      source,
+      kind,
+      externalId,
+      url,
+      title,
+      content,
+      happenedAt,
     });
 
     revalidatePath(`/contacts/${contactId}`);
 
-    return { success: true, data: record };
+    return { success: true, data: record, created };
   } catch (error) {
     console.error("Error adding external record:", error);
     return {

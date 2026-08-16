@@ -1589,9 +1589,17 @@ model ExternalRecord {
 
   contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
+  // Idempotent re-ingest: re-pushing the same (contactId, source, externalId)
+  // updates the existing row instead of creating a duplicate. Postgres treats
+  // NULLs as distinct, so manual/free records (externalId: null) are exempt
+  // from dedup and always insert a new row.
+  @@unique([contactId, source, externalId])
   @@index([contactId])
-  @@index([source, externalId])
   @@index([contactId, happenedAt])
+  // Kept alongside the compound unique: that index leads with contactId and
+  // can't serve lookups by source alone (GET /records?source=) or by
+  // (source, externalId) without a contactId (the ingest resolver, #26).
+  @@index([source, externalId])
   @@map("external_records")
 }
 

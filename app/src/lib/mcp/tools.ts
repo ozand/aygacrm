@@ -12,6 +12,7 @@ import {
   SOURCES,
   KINDS,
 } from "@/lib/ingestion-conventions";
+import { upsertExternalRecord } from "@/lib/external-record-upsert";
 
 export interface RequestMetadata {
   ipAddress: string | null;
@@ -695,23 +696,21 @@ export const toolDefinitions = {
         }
       }
 
-      const record = await db.externalRecord.create({
-        data: {
-          contactId: contact.id,
-          source: args.source,
-          kind: args.kind,
-          externalId: args.externalId ?? null,
-          url: args.url ?? null,
-          title: args.title ?? null,
-          content: args.content ?? null,
-          metadata: args.metadata
-            ? (args.metadata as Record<string, string | number | boolean | null>)
-            : undefined,
-          happenedAt: args.happenedAt ? dateFromString(args.happenedAt) : null,
-        },
+      const { record, created } = await upsertExternalRecord(db, {
+        contactId: contact.id,
+        source: args.source,
+        kind: args.kind,
+        externalId: args.externalId ?? null,
+        url: args.url ?? null,
+        title: args.title ?? null,
+        content: args.content ?? null,
+        metadata: args.metadata
+          ? (args.metadata as Record<string, string | number | boolean | null>)
+          : null,
+        happenedAt: args.happenedAt ? dateFromString(args.happenedAt) : null,
       });
 
-      return record;
+      return { ...record, created };
     },
   }),
   aygacrm_update_task: defineTool({

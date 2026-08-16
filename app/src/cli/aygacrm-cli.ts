@@ -11,6 +11,7 @@ import {
   type Source,
   type Kind,
 } from "../lib/ingestion-conventions.js";
+import { upsertExternalRecord } from "../lib/external-record-upsert.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -645,20 +646,20 @@ async function runRecordsAdd(args: string[]): Promise<void> {
     throw new Error("Contact not found");
   }
 
-  const record = await db.externalRecord.create({
-    data: {
-      contactId: contact.id,
-      source,
-      kind,
-      title: title ?? null,
-      url: url ?? null,
-      content: content ?? null,
-      externalId: externalId ?? null,
-      happenedAt,
-    },
+  const { record, created } = await upsertExternalRecord(db, {
+    contactId: contact.id,
+    source,
+    kind,
+    title: title ?? null,
+    url: url ?? null,
+    content: content ?? null,
+    externalId: externalId ?? null,
+    happenedAt,
   });
 
-  console.log(`Created record ${shortId(record.id)} for ${contactDisplayName(contact)}.`);
+  console.log(
+    `${created ? "Created" : "Updated"} record ${shortId(record.id)} for ${contactDisplayName(contact)}.`
+  );
 }
 
 async function main(): Promise<void> {

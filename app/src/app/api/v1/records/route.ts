@@ -20,6 +20,7 @@ import {
   validateMetadata,
   Source,
 } from "@/lib/ingestion-conventions";
+import { upsertExternalRecord } from "@/lib/external-record-upsert";
 
 // GET /api/v1/records - List external records
 export const GET = withApiAuth(
@@ -169,18 +170,16 @@ export const POST = withApiAuth(
         return apiError("NOT_FOUND", 404, "Contact not found");
       }
 
-      const record = await db.externalRecord.create({
-        data: {
-          contactId,
-          source,
-          kind,
-          externalId: externalId ?? null,
-          url: recordUrl ?? null,
-          title: title ?? null,
-          content: content ?? null,
-          metadata: metadata ? (metadata as Record<string, string | number | boolean | null>) : undefined,
-          happenedAt: happenedAt ? new Date(happenedAt) : null,
-        },
+      const { record, created } = await upsertExternalRecord(db, {
+        contactId,
+        source,
+        kind,
+        externalId: externalId ?? null,
+        url: recordUrl ?? null,
+        title: title ?? null,
+        content: content ?? null,
+        metadata: metadata ? (metadata as Record<string, string | number | boolean | null>) : null,
+        happenedAt: happenedAt ? new Date(happenedAt) : null,
       });
 
       // Fetch the contact for the response
@@ -195,7 +194,7 @@ export const POST = withApiAuth(
       });
 
       await createAuditLogFromApi({
-        action: AUDIT_ACTIONS.RECORD_CREATED,
+        action: created ? AUDIT_ACTIONS.RECORD_CREATED : AUDIT_ACTIONS.RECORD_UPDATED,
         objects: {
           entityId: record.id,
           entityName: record.title || `${record.source}/${record.kind}`,
@@ -234,7 +233,7 @@ export const POST = withApiAuth(
           created_at: record.createdAt.toISOString(),
           updated_at: record.updatedAt.toISOString(),
         },
-        201
+        created ? 201 : 200
       );
     } catch (error) {
       console.error("Error:", error);
